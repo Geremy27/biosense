@@ -5,14 +5,10 @@ const client = new OpenAI({
 });
 
 export async function analyzeExam(exam: File) {
-  console.log('analyzeExam');
-
   const uploadedFile = await client.files.create({
     file: exam,
     purpose: 'assistants',
   });
-
-  console.log('uploadedFile', uploadedFile);
 
   const response = await client.responses.create({
     model: 'gpt-5',

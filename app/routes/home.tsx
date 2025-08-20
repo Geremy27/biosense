@@ -7,16 +7,12 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  console.log('server');
-
   const formData = await request.formData();
   const file = formData.get('pdf') as File | null;
 
   if (typeof file === 'string' || !file) {
     return { error: 'No se envió archivo.' };
   }
-
-  console.log('file', file);
 
   const result = await analyzeExam(file);
   return result;

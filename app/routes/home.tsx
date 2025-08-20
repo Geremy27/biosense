@@ -9,12 +9,13 @@ export function meta({}: Route.MetaArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const file = formData.get('pdf') as File | null;
+  const prompt = formData.get('prompt') as string | null;
 
   if (typeof file === 'string' || !file) {
     return { error: 'No se envió archivo.' };
   }
 
-  const result = await analyzeExam(file);
+  const result = await analyzeExam({ exam: file, prompt: prompt || '' });
   return result;
 }
 
@@ -31,6 +32,15 @@ export default function Home() {
         method="post"
         className="flex py-4 h-full flex-col gap-4"
       >
+        <input
+          type="text"
+          name="prompt"
+          placeholder="Prompt"
+          className="flex p-2 border border-white rounded-md"
+          defaultValue={
+            'Analiza el examen y extrae la información. Primero di los valores de los parámetros del examen y luego el análisis.'
+          }
+        />
         <input
           type="file"
           name="pdf"

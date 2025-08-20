@@ -4,7 +4,12 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function analyzeExam(exam: File) {
+interface AnalyzeExamParams {
+  exam: File;
+  prompt: string;
+}
+
+export async function analyzeExam({ exam, prompt }: AnalyzeExamParams) {
   const uploadedFile = await client.files.create({
     file: exam,
     purpose: 'assistants',
@@ -14,6 +19,15 @@ export async function analyzeExam(exam: File) {
     model: 'gpt-5',
     input: [
       {
+        role: 'system',
+        content: [
+          {
+            type: 'input_text',
+            text: 'Eres un asistente medico experto en analizar exámenes médicos y extraer la información. Eres muy honesto, detallado y preciso. Es mejor decir la verdad que ocultar algo no favorable',
+          },
+        ],
+      },
+      {
         role: 'user',
         content: [
           {
@@ -22,7 +36,7 @@ export async function analyzeExam(exam: File) {
           },
           {
             type: 'input_text',
-            text: 'Analiza el examen y extrae la información. Primero di los valores de los parámetros del examen y luego el análisis.',
+            text: prompt,
           },
         ],
       },

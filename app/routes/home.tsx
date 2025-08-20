@@ -1,13 +1,13 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import type { Route } from './+types/home';
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
+  return [{ title: 'Biosense' }, { name: 'description', content: 'Biosense' }];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <div className="flex h-screen w-screen bg-gray-900 p-8">
+      <span className="text-white text-4xl font-semibold">Biosense</span>
+    </div>
+  );
 }

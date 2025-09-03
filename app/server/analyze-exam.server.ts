@@ -9,6 +9,10 @@ interface AnalyzeExamParams {
   prompt: string;
 }
 
+const systemPrompt = `
+  Eres medico investigador, especializado en medicina funcional, medicina de estilos de vida y longevidad.
+`;
+
 export async function analyzeExam({ exam, prompt }: AnalyzeExamParams) {
   const uploadedFile = await client.files.create({
     file: exam,
@@ -23,7 +27,7 @@ export async function analyzeExam({ exam, prompt }: AnalyzeExamParams) {
         content: [
           {
             type: 'input_text',
-            text: 'Eres un asistente medico experto en analizar exámenes médicos y extraer la información. Eres muy honesto, detallado y preciso. Es mejor decir la verdad que ocultar algo no favorable',
+            text: systemPrompt,
           },
         ],
       },

@@ -6,24 +6,6 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: 'Biosense' }, { name: 'description', content: 'Biosense' }];
 }
 
-const defaultPrompt = `Analiza todo el examen y extrae toda la información. Siempre muy honesto, detallado y preciso.
-Es mejor decir la verdad que ocultar algo no favorable, estas revisando la salud de un paciente.
-Primero expresa los todos los valores de manera que se asemejen a una tabla y utilizando colores, lo vas a expresar así:
-Todos los valores (El color antes de los valores, en color automático de acuerdo a los rangos óptimos respecto a edad y sexo;
-importantisimo la honestidad y veracidad de esto); Todos los parámetros del laboratorio reportados (la fuente de los números en color amarillo);
-y los parámetros óptimos/ideales de acuerdo a lo hallazgos mas reciente referentes al sexo y edad (la fuente de los números en color verde).
-Adicionalmente expresa diferentes parámetros inflamatorios y metabólicos que se puedan obtener con los laboratorios reportados del mismo día.
-Luego el análisis, aclarando los resultados de la analítica en comparación a los parámetros,
-y finaliza con sugerencias en el estilo de vida, dividida y expresada así:
-Nutricional, expresa las recomendaciones en gramos y tazas, al igual que frecuencia diaria y semanal de todo;
-Ejercicio, expresa la intensidad y como saberlo de manera sencilla, como si le estuviéras explicando a una persona sin educación superior, la frecuencia semanal y la duración diaria;
-Mental y Sueño, recalca la importancia y como poder ser consiente si se hace bien o no.
-Después expresa de 1 a máximo 3 recomendaciones de suplementos
-(Asociados con el estilo de vida sugerido, que sean los más eficientes e idóneos, tomando en cuenta los análisis de laboratorio, la estructura de medicina funcional y la evidencia científica actual),
-con dosificación. Si se requiere mas información para poder recomendar algo, exprésalo y no lo recomiendes).
-No ofrezcas más ayuda, únicamente la recomendación de asistir a los profesionales de la salud idóneos.
-`;
-
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const file = formData.get('pdf') as File | null;
@@ -38,7 +20,6 @@ export async function action({ request }: Route.ActionArgs) {
 
   const result = await analyzeExam({
     exam: file,
-    prompt: prompt ? prompt + addToPrompt : '',
   });
 
   return result;
@@ -50,7 +31,7 @@ export default function Home() {
   const isLoading = fetcher.state === 'submitting';
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-gray-900 p-8">
+    <div className="flex flex-col h-screen bg-gray-900 py-8 px-8 overflow-y-auto min-h-0">
       <span className="text-white text-4xl font-semibold">Biosense</span>
       <fetcher.Form
         encType="multipart/form-data"
@@ -62,12 +43,6 @@ export default function Home() {
           name="pdf"
           accept="application/pdf"
           className="flex text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500"
-        />
-        <textarea
-          name="prompt"
-          placeholder="Prompt"
-          className="flex p-2 h-48 border border-white rounded-md"
-          defaultValue={defaultPrompt}
         />
         <input
           type="text"
@@ -84,12 +59,85 @@ export default function Home() {
           {isLoading ? 'Cargando...' : 'Subir'}
         </button>
         {fetcher.data && (
-          <div className="flex flex-col gap-4">
-            <span className="text-lg">Resultado</span>
-            <div className="flex flex-grow">
-              <p className="text-white whitespace-pre-wrap h-96 overflow-y-auto bg-gray-800 p-4 rounded-md border border-white">
-                {fetcher.data}
-              </p>
+          <div className="flex flex-col gap-4 pb-8">
+            <span className="text-2xl">Resultados</span>
+            <div className="flex flex-col gap-2">
+              <span className="text-lg font-medium">Fecha</span>
+              <span className="text-sm">{fetcher.data.date}</span>
+            </div>
+            <span className="text-lg font-medium">Datos del examen</span>
+
+            <div className="flex flex-col rounded-md text-sm">
+              <div className="flex bg-gray-800 px-4 py-2">
+                <span className="flex flex-1">Parámetros</span>
+                <span className="flex flex-1">Unidad</span>
+                <span className="flex flex-1">Valor Actual</span>
+                <span className="flex flex-1">Valor Óptimo</span>
+                <span className="flex flex-[4]">Valoración</span>
+              </div>
+              <div className="flex flex-col px-4">
+                {fetcher.data.parameters.map(
+                  (parameter: {
+                    name: string;
+                    unit: string;
+                    currentRange: { min: number; max: number };
+                    optimalRange: { min: number; max: number };
+                    valuation: string;
+                  }) => (
+                    <div className="flex py-2">
+                      <span className="flex flex-1">{parameter.name}</span>
+                      <span className="flex flex-1">{parameter.unit}</span>
+                      <span className="flex flex-1">
+                        {parameter.currentRange.min}{' '}
+                        {parameter.currentRange.max ? `- ${parameter.currentRange.max}` : ''}
+                      </span>
+                      <span className="flex flex-1">
+                        {parameter.optimalRange.min}{' '}
+                        {parameter.optimalRange.max ? `- ${parameter.optimalRange.max}` : ''}
+                      </span>
+                      <span className="flex flex-[4]">{parameter.valuation}</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+            <span className="text-lg font-medium">Análisis</span>
+            <span className="text-sm">{fetcher.data.analysis}</span>
+            <span className="text-lg font-medium">Recomendaciones Nutricionales</span>
+            <div className="flex flex-col text-sm gap-2">
+              {fetcher.data.nutritionalRecommendations.map(
+                (recommendation: string, index: number) => (
+                  <span key={index}>
+                    {index + 1}. {recommendation}
+                  </span>
+                ),
+              )}
+            </div>
+            <span className="text-lg font-medium">Recomendaciones de Ejercicio</span>
+            <div className="flex flex-col text-sm gap-2">
+              {fetcher.data.exerciseRecommendations.map((recommendation: string, index: number) => (
+                <span key={index}>
+                  {index + 1}. {recommendation}
+                </span>
+              ))}
+            </div>
+            <span className="text-lg font-medium">Recomendaciones de Sueño</span>
+            <div className="flex flex-col text-sm gap-2">
+              {fetcher.data.sleepRecommendations.map((recommendation: string, index: number) => (
+                <span key={index}>
+                  {index + 1}. {recommendation}
+                </span>
+              ))}
+            </div>
+            <span className="text-lg">Recomendaciones de Suplementos</span>
+            <div className="flex flex-col text-sm gap-2">
+              {fetcher.data.supplementRecommendations.map(
+                (recommendation: string, index: number) => (
+                  <span key={index}>
+                    {index + 1}. {recommendation}
+                  </span>
+                ),
+              )}
             </div>
           </div>
         )}

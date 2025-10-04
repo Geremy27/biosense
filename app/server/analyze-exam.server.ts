@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { zodTextFormat } from 'openai/helpers/zod.mjs';
+import { zodTextFormat } from 'openai/helpers/zod';
 import z from 'zod';
 
 const client = new OpenAI({

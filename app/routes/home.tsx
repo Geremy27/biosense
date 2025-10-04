@@ -73,7 +73,7 @@ export default function Home() {
                 <span className="flex flex-1">Unidad</span>
                 <span className="flex flex-1">Valor Actual</span>
                 <span className="flex flex-1">Valor Óptimo</span>
-                <span className="flex flex-[4]">Valoración</span>
+                <span className="flex flex-[4]">Interpretación</span>
               </div>
               <div className="flex flex-col px-4">
                 {fetcher.data.parameters.map(

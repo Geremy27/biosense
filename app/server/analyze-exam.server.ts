@@ -22,10 +22,21 @@ const ExamAnalysisResult = z.object({
         currentRange: z
           .object({
             min: z.number(),
+            max: z
+              .number()
+              .nullable()
+              .describe('Si hay solo un valor encontrado, deja el max en null.'),
+          })
+          .describe(
+            'Los parámetros del laboratorio reportados. Si hay solo un valor, expresa el min y deja el max en null.',
+          ),
+        laboratoryRange: z
+          .object({
+            min: z.number(),
             max: z.number().nullable(),
           })
           .describe(
-            'Los parámetros del laboratorio reportados. Si es solo uno, solo expresa el min.',
+            'Los parámetros de referencia del laboratorio. Si es solo uno, solo expresa el min.',
           ),
         optimalRange: z
           .object({
@@ -42,11 +53,15 @@ const ExamAnalysisResult = z.object({
     .describe(
       'Todos los valores (El color antes de los valores, en color automático de acuerdo a los rangos óptimos respecto a edad y sexo;',
     ),
-  analysis: z
-    .string()
-    .describe(
-      'Luego el análisis, aclarando los resultados de la analítica en comparación a los parámetros,',
-    ),
+  analysis: z.array(z.string()).describe(
+    `Luego el análisis, aclarando los resultados de la analítica en comparación a los parámetros,
+       expresa cada punto analizado en un array de strings. Si se encuentra un area dentro de la normalidad,
+       no es necesario mencionarlo a menos que solamente tenga 2 puntos por mencionar.
+       El objetivo de añadir un valor en normalidad es evitar alucionanciones si se encuentra menos de 3 puntos
+       que sean criticos. Que sean los 3 puntos más importantes y maximo 5 puntos si es necesario.
+       Si todo esta en normalidad, decir que todo esta en normalidad.
+       Ejemplo: "El parámetro [nombre del parámetro] está [valor] [unidad], lo cual es [interpretación]."`,
+  ),
   nutritionalRecommendations: z
     .array(z.string())
     .describe(

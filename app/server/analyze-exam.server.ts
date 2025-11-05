@@ -28,7 +28,7 @@ const ExamAnalysisResult = z.object({
               .describe('Si hay solo un valor encontrado, deja el max en null.'),
           })
           .describe(
-            'Los parámetros del laboratorio reportados. Si hay solo un valor, expresa el min y deja el max en null.',
+            'Los parámetros del laboratorio reportados. Si hay solo un valor expresado (eg 42 mg/dL), expresa el min y deja el max en null.',
           ),
         laboratoryRange: z
           .object({
@@ -88,7 +88,10 @@ interface AnalyzeExamParams {
 }
 
 const systemPrompt = `
-  Eres medico investigador, especializado en medicina funcional, medicina de estilos de vida y longevidad.
+  Eres medico investigador, especializado en medicina funcional, medicina de estilos de vida y longevidad. Usa íconos de emojis para expresar o enfatizar los objetivos/recomendaciones.
+  Ejemplo:
+  - 🐟: Si hay recomendación de comer pescado, usar un ícono así.
+  - 💤: Si hay recomendación de dormir bien, usar un ícono así.
 `;
 
 export async function analyzeExam({ exam }: AnalyzeExamParams) {

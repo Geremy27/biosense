@@ -69,14 +69,14 @@ export default function Home() {
 
             <div className="flex flex-col rounded-md text-sm">
               <div className="flex bg-gray-800 px-4 py-2">
-                <span className="flex flex-1 pr-2">Parámetros</span>
-                <span className="flex flex-1 pr-2">Unidad</span>
-                <span className="flex flex-1 pr-2">Valor Actual</span>
-                <span className="flex flex-1 pr-2">Valor de Laboratorio</span>
-                <span className="flex flex-1 pr-2">Valor Óptimo</span>
-                <span className="flex flex-[4]">Interpretación</span>
+                <span className="flex w-72 p-2">Parámetros</span>
+                <span className="flex w-48 p-2">Unidad</span>
+                <span className="flex w-48 p-2">Valor Actual</span>
+                <span className="flex w-48 p-2">Valor de Laboratorio</span>
+                <span className="flex w-48 p-2">Valor Óptimo</span>
+                <span className="flex flex-1 p-2">Interpretación</span>
               </div>
-              <div className="flex flex-col px-4">
+              <div className="flex flex-col h-96 overflow-y-auto">
                 {fetcher.data.parameters.map(
                   (parameter: {
                     name: string;
@@ -86,22 +86,22 @@ export default function Home() {
                     optimalRange: { min: number; max: number };
                     valuation: string;
                   }) => (
-                    <div className="flex py-2">
-                      <span className="flex flex-1 pr-2">{parameter.name}</span>
-                      <span className="flex flex-1 pr-2">{parameter.unit}</span>
-                      <span className="flex flex-1 pr-2">
+                    <div className="flex py-2 hover:bg-gray-700 border-b border-gray-700 px-4">
+                      <span className="flex w-72 p-2">{parameter.name}</span>
+                      <span className="flex w-48 p-2">{parameter.unit}</span>
+                      <span className="flex w-48 p-2">
                         {parameter.currentRange.min}{' '}
                         {parameter.currentRange.max ? `- ${parameter.currentRange.max}` : ''}
                       </span>
-                      <span className="flex flex-1 pr-2">
+                      <span className="flex w-48 p-2">
                         {parameter.laboratoryRange.min}{' '}
                         {parameter.laboratoryRange.max ? `- ${parameter.laboratoryRange.max}` : ''}
                       </span>
-                      <span className="flex flex-1 pr-2">
+                      <span className="flex w-48 p-2">
                         {parameter.optimalRange.min}{' '}
                         {parameter.optimalRange.max ? `- ${parameter.optimalRange.max}` : ''}
                       </span>
-                      <span className="flex flex-[4]">{parameter.valuation}</span>
+                      <span className="flex flex-1 p-2">{parameter.valuation}</span>
                     </div>
                   ),
                 )}

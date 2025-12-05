@@ -6,13 +6,6 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-enum ExamParameterValuation {
-  GOOD = 'good',
-  AVERAGE = 'average',
-  BAD = 'bad',
-  UNKOWN = 'unknown',
-}
-
 const ExamAnalysisResult = z.object({
   date: z.string(),
   parameters: z
@@ -83,8 +76,18 @@ const ExamAnalysisResult = z.object({
       'Expresa de 1 a máximo 3 recomendaciones de suplementos (Asociados con el estilo de vida sugerido, que sean los más eficientes e idóneos, tomando en cuenta los análisis de laboratorio, la estructura de medicina funcional y la evidencia científica actual)',
     ),
 });
+export interface Medication {
+  name: string;
+  startingDate: string;
+  dose: number;
+  frequency: string;
+}
+
 interface AnalyzeExamParams {
   exam: File;
+  isTakingMedication?: boolean;
+  additionalInfo?: string;
+  medications?: Medication[];
 }
 
 const systemPrompt = `
@@ -94,11 +97,28 @@ const systemPrompt = `
   - 💤: Si hay recomendación de dormir bien, usar un ícono así.
 `;
 
-export async function analyzeExam({ exam }: AnalyzeExamParams) {
+export async function analyzeExam({
+  exam,
+  isTakingMedication,
+  medications,
+  additionalInfo,
+}: AnalyzeExamParams) {
   const uploadedFile = await client.files.create({
     file: exam,
     purpose: 'assistants',
   });
+
+  // Build medication context text
+  let medicationContext = '';
+  if (isTakingMedication && medications && medications.length > 0) {
+    const medicationList = medications
+      .map(
+        (med) =>
+          `- ${med.name}: Dosis ${med.dose}, Frecuencia: ${med.frequency}, Fecha de inicio: ${med.startingDate}`,
+      )
+      .join('\n');
+    medicationContext = `\n\nEl paciente está tomando los siguientes medicamentos:\n${medicationList}\n\nConsidera estos medicamentos al analizar los resultados del examen, ya que pueden afectar los valores de los parámetros.`;
+  }
 
   const response = await client.responses.parse({
     model: 'gpt-5',
@@ -124,6 +144,8 @@ export async function analyzeExam({ exam }: AnalyzeExamParams) {
             text: `
               Analiza todo el examen y extrae toda la información. Siempre muy honesto, detallado y preciso.
               Es mejor decir la verdad que ocultar algo no favorable, estas revisando la salud de un paciente.
+              ${medicationContext}
+              ${additionalInfo ? `\n\nInformación adicional: ${additionalInfo}` : ''}
             `,
           },
         ],

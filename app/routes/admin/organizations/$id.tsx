@@ -1,5 +1,7 @@
 import { Form, Link, redirect, useActionData, useLoaderData } from 'react-router';
 
+import { Breadcrumbs } from '~/components/ui/breadcrumbs';
+import { PageHeader } from '~/components/ui/page-header';
 import {
   deleteOrganization,
   getOrganization,
@@ -55,8 +57,14 @@ export default function EditOrganization() {
 
   return (
     <div className="max-w-xl">
-      <p className="eyebrow">Organizaciones</p>
-      <h2 className="text-3xl font-bold tracking-tight text-cyan-950">{organization.name}</h2>
+      <Breadcrumbs
+        items={[
+          { label: 'Panel', to: '/admin' },
+          { label: 'Organizaciones', to: '/admin/organizations' },
+          { label: organization.name },
+        ]}
+      />
+      <PageHeader eyebrow="Organizaciones" title={organization.name} />
 
       {actionData?.ok ? (
         <p className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-900">

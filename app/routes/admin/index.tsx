@@ -1,5 +1,6 @@
-import { Link } from 'react-router';
-
+import { Building2, Users } from 'lucide-react';
+import { PageHeader } from '~/components/ui/page-header';
+import { StatCard } from '~/components/ui/stat-card';
 import { buildActorContext } from '~/utils/session.server';
 import { listOrganizations } from '~/services/organizations.service';
 import { listProviders } from '~/services/providers.service';
@@ -26,26 +27,26 @@ export function meta({}: Route.MetaArgs) {
 export default function AdminHome({ loaderData }: Route.ComponentProps) {
   return (
     <div className="w-full max-w-6xl">
-      <div className="card-elevated">
-        <p className="eyebrow mb-4">Panel</p>
-        <h2 className="text-3xl font-bold tracking-tight text-cyan-950">
-          Bienvenido al área de administración
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-500">
-          Has iniciado sesión como administrador de plataforma. Esta área está aislada del portal
-          de prestadores, que tendrá su propia ruta cuando lo construyamos.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Panel"
+        title="Bienvenido al área de administración"
+        description="Has iniciado sesión como administrador de plataforma. Los prestadores acceden por su propio portal en /provider."
+        headingLevel="h1"
+      />
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        <Link to="/admin/organizations" className="card transition-shadow hover:shadow-md">
-          <p className="text-sm font-semibold text-slate-500">Organizaciones</p>
-          <p className="mt-2 text-4xl font-bold text-cyan-950">{loaderData.organizationsCount}</p>
-        </Link>
-        <Link to="/admin/users?role=provider" className="card transition-shadow hover:shadow-md">
-          <p className="text-sm font-semibold text-slate-500">Prestadores</p>
-          <p className="mt-2 text-4xl font-bold text-cyan-950">{loaderData.providersCount}</p>
-        </Link>
+        <StatCard
+          label="Organizaciones"
+          value={loaderData.organizationsCount}
+          to="/admin/organizations"
+          icon={Building2}
+        />
+        <StatCard
+          label="Prestadores"
+          value={loaderData.providersCount}
+          to="/admin/users?role=provider"
+          icon={Users}
+        />
       </div>
     </div>
   );

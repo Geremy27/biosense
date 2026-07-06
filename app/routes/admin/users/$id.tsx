@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Form, Link, redirect, useActionData, useLoaderData } from 'react-router';
 
+import { Breadcrumbs } from '~/components/ui/breadcrumbs';
+import { PageHeader } from '~/components/ui/page-header';
 import { UserRole } from '~/db/models/enums';
 import { listOrganizations } from '~/services/organizations.service';
 import { deleteUser, getUser, updateUserById, UserValidationError } from '~/services/users.service';
@@ -82,8 +84,14 @@ export default function EditUser() {
 
   return (
     <div className="max-w-xl">
-      <p className="eyebrow">Usuarios</p>
-      <h2 className="text-3xl font-bold tracking-tight text-cyan-950">{user.name}</h2>
+      <Breadcrumbs
+        items={[
+          { label: 'Panel', to: '/admin' },
+          { label: 'Usuarios', to: '/admin/users' },
+          { label: user.name },
+        ]}
+      />
+      <PageHeader eyebrow="Usuarios" title={user.name} />
 
       {actionData?.ok ? (
         <p className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-900">

@@ -1,16 +1,16 @@
-# Design System — Medeloop-inspired (standard Tailwind)
+# Design System (standard Tailwind)
 
-> Visual reference for the Health EMR app. Inspired by [medeloop.ai](https://www.medeloop.ai) and [analytics.medeloop.ai](https://analytics.medeloop.ai): clean healthcare SaaS with dark cyan headings, teal accents, soft aurora gradients, glassy navigation, and softly rounded buttons.
+> Visual reference for the Health EMR app: clean healthcare SaaS with dark cyan headings, teal accents, soft aurora gradients, glassy navigation, and softly rounded buttons.
 >
-> **For Cursor:** Use **only built-in Tailwind utilities**. Medeloop's exact hex values are rounded to the nearest Tailwind class. Reuse component classes from `app/app.css` when possible.
+> **For Cursor:** Use **only built-in Tailwind utilities**. Design tokens are mapped to the nearest standard Tailwind class. Reuse component classes from `app/app.css` when possible.
 
 ---
 
 ## Rounding guide
 
-Medeloop uses precise pixel values. We map them to the closest standard Tailwind class:
+Design tokens use precise pixel values in the source palette. We map them to the closest standard Tailwind class:
 
-| Medeloop           | Nearest Tailwind           | Notes                    |
+| Token              | Nearest Tailwind           | Notes                    |
 | ------------------ | -------------------------- | ------------------------ |
 | Navy `#0C3651`     | `cyan-950`                 | Headings, nav            |
 | Teal `#0891B2`     | `cyan-600`                 | Exact match              |
@@ -56,7 +56,7 @@ Use these Tailwind palettes only — no custom `@theme` colors.
 | Accent surface | `bg-cyan-50`                   | Badge backgrounds, highlights           |
 | Border         | `border-slate-200`             | Cards, inputs                           |
 | Accent border  | `border-cyan-200`              | Header rule, elevated cards             |
-| Primary CTA    | `bg-slate-700`                 | Buttons — Medeloop uses slate, not teal |
+| Primary CTA    | `bg-slate-700`                 | Buttons — slate fill, not teal |
 | Success        | `text-teal-700` / `bg-teal-50` | Validation, positive states             |
 
 ### Aurora blobs (decorative only)
@@ -89,6 +89,7 @@ Or use the `.aurora-bg` component class from `app/app.css`.
 | ------------ | -------------------------------------------------------------------------------- |
 | Hero H1      | `text-5xl md:text-6xl font-extrabold text-cyan-950 leading-tight tracking-tight` |
 | Page H1      | `text-5xl font-extrabold text-cyan-950 leading-tight tracking-tight`             |
+| App page title | `text-2xl font-bold text-cyan-950 tracking-tight` (`PageHeader`)               |
 | Section H2   | `text-4xl font-bold text-cyan-950 leading-tight`                                 |
 | Card H3      | `text-2xl font-bold text-cyan-950 leading-snug`                                  |
 | Card title   | `text-lg font-semibold text-cyan-950`                                            |
@@ -123,7 +124,7 @@ Reusable classes live in `app/app.css`. Prefer them over repeating utilities.
 
 ### Buttons
 
-App UI buttons (like [analytics.medeloop.ai](https://analytics.medeloop.ai/)) use **soft corners**, not marketing-site pills. Default to `rounded-lg` for all actions in this app.
+App UI buttons use **soft corners**, not pill shapes. Default to `rounded-lg` for all actions in this app.
 
 **Primary** (slate):
 
@@ -195,6 +196,154 @@ Dropdown: `absolute mt-2 rounded-xl bg-white p-2 shadow-lg`
 
 Dropdown row: `rounded-lg px-2 py-2 hover:bg-slate-50`
 
+### Sidebar (app shell)
+
+Used in admin and provider portals via `AppSidebarLayout`.
+
+| Element | Classes / component |
+| ------- | ------------------- |
+| Shell | `border-r border-cyan-200 bg-white` |
+| Nav link | `admin-sidebar-link` |
+| Active nav | `admin-sidebar-link-active` — adds `border-l-2 border-cyan-600 bg-cyan-50 text-cyan-700` |
+| Collapsed nav | `admin-sidebar-link-collapsed` — removes left border |
+| Content area | `admin-content` — gradient background + padding |
+| User block | `rounded-lg bg-slate-50 px-3 py-3` with optional org subtitle in `text-cyan-600` |
+
+**Portal branding:**
+
+| Portal | Eyebrow | Title |
+| ------ | ------- | ----- |
+| Admin | Administración | Health EMR |
+| Provider | Consultorio | Health EMR |
+
+### Page header
+
+Use `PageHeader` on every app screen — list pages, dashboards, and forms.
+
+```tsx
+<PageHeader
+  eyebrow="Consultorio"
+  title="Pacientes"
+  description="Optional subtitle"
+  headingLevel="h1" // dashboards only
+  actions={<Link to="..." className="btn-primary">Nuevo paciente</Link>}
+/>
+```
+
+- Dashboards: `headingLevel="h1"`, no wrapper card — header sits on the gradient background.
+- List pages: include `actions` for the primary CTA (e.g. “Nuevo usuario”).
+- Forms: pair with `Breadcrumbs` above the header.
+- Title size: `text-2xl font-bold text-cyan-950` (app screens — not marketing hero scale).
+
+### Breadcrumbs
+
+Use on form and detail pages for wayfinding:
+
+```tsx
+<Breadcrumbs
+  items={[
+    { label: 'Panel', to: '/provider' },
+    { label: 'Pacientes', to: '/provider/patients' },
+    { label: 'Nuevo paciente' },
+  ]}
+/>
+```
+
+Classes: `text-sm text-slate-500`, current page `font-semibold text-cyan-950`, links `hover:text-cyan-600`.
+
+### Stat cards
+
+Use `StatCard` for dashboard metrics. Linked cards use `stat-card-interactive` (hover lift + shadow).
+
+```tsx
+<StatCard label="Pacientes" value={12} to="/provider/patients" icon={Users} />
+<StatCard label="Consultas" value="—" icon={Calendar} comingSoon />
+```
+
+- Include a Lucide icon in the `icon-container` (`size-12 rounded-xl bg-cyan-50`).
+- Linked cards show “Ver detalle →” in `text-cyan-600`.
+- Placeholder metrics: `comingSoon` prop renders muted “Próximamente” card at `opacity-60`.
+- Dashboard grids: `sm:grid-cols-2` until enough metrics exist.
+
+### Data tables
+
+Reusable classes in `app/app.css`:
+
+| Element | Class |
+| ------- | ----- |
+| Table | `data-table` |
+| Header row | `data-table-head` — `text-xs uppercase tracking-wider text-slate-500 bg-slate-50` |
+| Header cell | `data-table-th` |
+| Body row | `data-table-row` — `hover:bg-slate-50/80 transition-colors` |
+| Body cell | `data-table-td` |
+| Wrapper | `card overflow-hidden p-0` |
+
+Row name column: `font-medium text-cyan-950`. Secondary columns: `text-slate-600`.
+
+Action links in last column: `font-semibold text-cyan-600 hover:text-cyan-800`.
+
+### Empty states
+
+Do **not** show empty messages inside table rows. Use `EmptyState` instead:
+
+```tsx
+<EmptyState
+  icon={Users}
+  title="Aún no tienes pacientes registrados"
+  description="Registra tu primer paciente para comenzar."
+  action={<Link to="..." className="btn-primary">Registrar primer paciente</Link>}
+/>
+```
+
+Class: `empty-state` — centered card with `icon-container`, title, description, and optional CTA.
+
+### Filter tabs
+
+Use `FilterTabs` for list page filters (e.g. user roles):
+
+```tsx
+<FilterTabs tabs={[{ label: 'Todos', href: '/admin/users', isActive: true }, ...]} />
+```
+
+Classes: `filter-tab` (inactive), `filter-tab-active` (matches sidebar active styling).
+
+### Status badges
+
+Pill badges for roles and states:
+
+| Variant | Class | Use |
+| ------- | ----- | --- |
+| Provider | `badge-role-provider` | `bg-cyan-50 text-cyan-600` |
+| Admin | `badge-role-admin` | `bg-slate-100 text-slate-600` |
+| Active | `badge-status-active` | `bg-teal-50 text-teal-700` |
+| Inactive | `badge-status-inactive` | `bg-slate-100 text-slate-400` |
+
+Base: `badge-pill` → `inline-flex rounded-full px-3 py-1 text-xs font-semibold`.
+
+Use `RoleBadge` component for user role columns in tables.
+
+### Login pages
+
+Use `LoginPageShell` with aurora background and `card-elevated`. Include cross-portal footer:
+
+```tsx
+<LoginPageShell
+  eyebrow="Portal de prestadores"
+  title="Iniciar sesión"
+  description="..."
+  footer={
+    <p className="text-center text-sm text-slate-500">
+      ¿Eres administrador?{' '}
+      <Link to="/admin/login" className="font-semibold text-cyan-600 hover:text-cyan-800">
+        Ir al portal de administración
+      </Link>
+    </p>
+  }
+>
+```
+
+Footer sits below a `border-t border-slate-100` divider inside the card.
+
 ### Feature list (dot bullets)
 
 ```html
@@ -209,7 +358,9 @@ Dropdown row: `rounded-lg px-2 py-2 hover:bg-slate-50`
 
 ### Icon container
 
-`flex size-12 shrink-0 items-center justify-center rounded-xl bg-cyan-50`
+`icon-container` → `flex size-12 shrink-0 items-center justify-center rounded-xl bg-cyan-50`
+
+Used in stat cards, empty states, and feature lists.
 
 ### Footer
 
@@ -276,8 +427,12 @@ Links: `text-sm text-slate-600 hover:text-cyan-950`
 
 - Use `cyan-950` + `cyan-600` + `slate-*` only
 - Use `shadow-sm` / `shadow-md` / `shadow-lg` — not arbitrary shadows
-- Use `rounded-lg` buttons in app UI (`btn-primary`, `btn-ghost`) — match analytics.medeloop.ai
+- Use `rounded-lg` buttons in app UI (`btn-primary`, `btn-ghost`)
 - Reuse `.btn-primary`, `.card`, `.page-shell`, etc. from `app/app.css`
+- Use `PageHeader` on every screen; pair with `Breadcrumbs` on forms
+- Use `EmptyState` instead of empty table rows
+- Use `RoleBadge` / `StatusBadge` for role and status columns
+- Reserve `card-elevated` for login, success states — not dashboard intros
 
 **Don't**
 
@@ -286,6 +441,9 @@ Links: `text-sm text-slate-600 hover:text-cyan-950`
 - Use teal/cyan as primary button fill
 - Use dark mode by default
 - Use Inter — stick to Open Sans
+- Wrap dashboard welcome text in `card-elevated`
+- Hand-roll page headers — use `PageHeader` component
+- Use `@apply card` (or any custom component class) inside another `@layer components` rule — Tailwind v4 only allows `@apply` with utility classes; inline the utilities instead
 
 ---
 
@@ -295,5 +453,13 @@ Links: `text-sm text-slate-600 hover:text-cyan-950`
 | --------------------------------- | -------------------------------------------------------------- |
 | `app/app.css`                     | `font-sans` theme + component classes (standard `@apply` only) |
 | `app/root.tsx`                    | Open Sans font link                                            |
+| `app/components/ui/page-header.tsx` | Page title + actions toolbar                                 |
+| `app/components/ui/stat-card.tsx` | Dashboard metric cards                                       |
+| `app/components/ui/breadcrumbs.tsx` | Form/detail wayfinding                                     |
+| `app/components/ui/empty-state.tsx` | List empty states with CTA                                 |
+| `app/components/ui/filter-tabs.tsx` | List page filter tabs                                      |
+| `app/components/ui/status-badge.tsx` | Role and status pill badges                               |
+| `app/components/layout/app-sidebar-layout.tsx` | Admin/provider sidebar shell                  |
+| `app/components/auth/login-page-shell.tsx` | Login card with aurora background              |
 | `docs/design-system.md`           | This reference                                                 |
 | `.cursor/rules/design-system.mdc` | Cursor rule pointing here                                      |

@@ -28,3 +28,29 @@ export function assertPlatformAdminOrSelf(ctx: ActorContext, providerId: string)
 
   throw new AuthorizationError();
 }
+
+// Ensures the actor is an authenticated provider with a linked profile.
+export function assertProvider(ctx: ActorContext): asserts ctx is ActorContext & {
+  role: UserRole.PROVIDER;
+  providerId: string;
+} {
+  if (ctx.role !== UserRole.PROVIDER || !ctx.providerId) {
+    throw new AuthorizationError('Provider access required');
+  }
+}
+
+// Ensures the actor can access the given patient record.
+export function assertPatientAccess(
+  ctx: ActorContext,
+  patient: { primaryProviderId: string },
+): void {
+  if (ctx.role === UserRole.PLATFORM_ADMIN) {
+    return;
+  }
+
+  if (ctx.role === UserRole.PROVIDER && ctx.providerId === patient.primaryProviderId) {
+    return;
+  }
+
+  throw new AuthorizationError();
+}

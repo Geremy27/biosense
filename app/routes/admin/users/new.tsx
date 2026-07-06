@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
+import { Breadcrumbs } from '~/components/ui/breadcrumbs';
+import { PageHeader } from '~/components/ui/page-header';
 import { UserRole } from '~/db/models/enums';
 import { listOrganizations } from '~/services/organizations.service';
 import { createUser, UserValidationError } from '~/services/users.service';
@@ -56,31 +58,39 @@ export default function NewUser() {
 
   if (actionData?.ok) {
     return (
-      <div className="max-w-xl card-elevated">
-        <p className="eyebrow">Usuarios</p>
-        <h2 className="text-3xl font-bold tracking-tight text-cyan-950">Usuario creado</h2>
-        <p className="mt-3 text-sm text-slate-500">
-          Comparte esta contraseña temporal de forma segura con {actionData.user.name}. Debería
-          cambiarla después del primer inicio de sesión, cuando el portal de prestadores esté
-          disponible.
-        </p>
-
-        <div className="mt-6 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-widest text-cyan-600">
-            Contraseña temporal
+      <div className="max-w-xl">
+        <Breadcrumbs
+          items={[
+            { label: 'Panel', to: '/admin' },
+            { label: 'Usuarios', to: '/admin/users' },
+            { label: 'Usuario creado' },
+          ]}
+        />
+        <div className="card-elevated">
+          <PageHeader eyebrow="Usuarios" title="Usuario creado" />
+          <p className="mt-3 text-sm text-slate-500">
+            Comparte esta contraseña temporal de forma segura con {actionData.user.name}. Debería
+            cambiarla después del primer inicio de sesión, cuando el portal de prestadores esté
+            disponible.
           </p>
-          <p className="mt-2 font-mono text-lg font-bold text-cyan-950">
-            {actionData.temporaryPassword}
-          </p>
-        </div>
 
-        <div className="mt-6 flex gap-3">
-          <Link to={`/admin/users/${actionData.user.id}`} className="btn-primary">
-            Ver usuario
-          </Link>
-          <Link to="/admin/users" className="btn-ghost">
-            Volver a usuarios
-          </Link>
+          <div className="mt-6 rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-cyan-600">
+              Contraseña temporal
+            </p>
+            <p className="mt-2 font-mono text-lg font-bold text-cyan-950">
+              {actionData.temporaryPassword}
+            </p>
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <Link to={`/admin/users/${actionData.user.id}`} className="btn-primary">
+              Ver usuario
+            </Link>
+            <Link to="/admin/users" className="btn-ghost">
+              Volver a usuarios
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -88,8 +98,14 @@ export default function NewUser() {
 
   return (
     <div className="max-w-xl">
-      <p className="eyebrow">Usuarios</p>
-      <h2 className="text-3xl font-bold tracking-tight text-cyan-950">Nuevo usuario</h2>
+      <Breadcrumbs
+        items={[
+          { label: 'Panel', to: '/admin' },
+          { label: 'Usuarios', to: '/admin/users' },
+          { label: 'Nuevo usuario' },
+        ]}
+      />
+      <PageHeader eyebrow="Usuarios" title="Nuevo usuario" />
 
       <Form method="post" className="mt-8 card space-y-4">
         <div>

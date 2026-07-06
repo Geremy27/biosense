@@ -1,5 +1,8 @@
+import { Building2 } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { EmptyState } from '~/components/ui/empty-state';
+import { PageHeader } from '~/components/ui/page-header';
 import { listOrganizations } from '~/services/organizations.service';
 import { buildActorContext } from '~/utils/session.server';
 
@@ -19,40 +22,47 @@ export function meta({}: Route.MetaArgs) {
 export default function OrganizationsIndex({ loaderData }: Route.ComponentProps) {
   return (
     <div className="w-full">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Administración</p>
-          <h2 className="text-3xl font-bold tracking-tight text-cyan-950">Organizaciones</h2>
-        </div>
-        <Link to="/admin/organizations/new" className="btn-primary">
-          Nueva organización
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Administración"
+        title="Organizaciones"
+        actions={
+          <Link to="/admin/organizations/new" className="btn-primary">
+            Nueva organización
+          </Link>
+        }
+      />
 
-      <div className="mt-8 card overflow-hidden p-0">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-slate-500">
-            <tr>
-              <th className="px-6 py-3 font-semibold">Nombre</th>
-              <th className="px-6 py-3 font-semibold">Creada</th>
-              <th className="px-6 py-3 font-semibold" />
-            </tr>
-          </thead>
-          <tbody>
-            {loaderData.organizations.length === 0 ? (
+      {loaderData.organizations.length === 0 ? (
+        <div className="mt-8">
+          <EmptyState
+            icon={Building2}
+            title="Aún no hay organizaciones"
+            description="Crea la primera organización para vincular prestadores y pacientes."
+            action={
+              <Link to="/admin/organizations/new" className="btn-primary">
+                Nueva organización
+              </Link>
+            }
+          />
+        </div>
+      ) : (
+        <div className="mt-8 card overflow-hidden p-0">
+          <table className="data-table">
+            <thead className="data-table-head">
               <tr>
-                <td colSpan={3} className="px-6 py-8 text-slate-500">
-                  Aún no hay organizaciones.
-                </td>
+                <th className="data-table-th">Nombre</th>
+                <th className="data-table-th">Creada</th>
+                <th className="data-table-th" />
               </tr>
-            ) : (
-              loaderData.organizations.map((organization) => (
-                <tr key={organization.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-6 py-4 font-medium text-cyan-950">{organization.name}</td>
-                  <td className="px-6 py-4 text-slate-500">
+            </thead>
+            <tbody>
+              {loaderData.organizations.map((organization) => (
+                <tr key={organization.id} className="data-table-row">
+                  <td className="data-table-td font-medium text-cyan-950">{organization.name}</td>
+                  <td className="data-table-td text-slate-500">
                     {new Date(organization.createdAt).toLocaleDateString('es-CO')}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="data-table-td text-right">
                     <Link
                       to={`/admin/organizations/${organization.id}`}
                       className="font-semibold text-cyan-600 hover:text-cyan-800"
@@ -61,11 +71,11 @@ export default function OrganizationsIndex({ loaderData }: Route.ComponentProps)
                     </Link>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { Form, Link, redirect, useActionData } from 'react-router';
 
+import { Breadcrumbs } from '~/components/ui/breadcrumbs';
+import { PageHeader } from '~/components/ui/page-header';
 import { createOrganization } from '~/services/organizations.service';
 import { buildActorContext } from '~/utils/session.server';
 
@@ -27,8 +29,14 @@ export default function NewOrganization() {
 
   return (
     <div className="max-w-xl">
-      <p className="eyebrow">Organizaciones</p>
-      <h2 className="text-3xl font-bold tracking-tight text-cyan-950">Nueva organización</h2>
+      <Breadcrumbs
+        items={[
+          { label: 'Panel', to: '/admin' },
+          { label: 'Organizaciones', to: '/admin/organizations' },
+          { label: 'Nueva organización' },
+        ]}
+      />
+      <PageHeader eyebrow="Organizaciones" title="Nueva organización" />
 
       <Form method="post" className="mt-8 card space-y-4">
         <div>

@@ -3,19 +3,20 @@ import { LoginPageShell } from '~/components/auth/login-page-shell';
 import { FormError } from '~/components/forms/form-error';
 import { FormField } from '~/components/forms/form-field';
 import { AuditAction } from '~/db/models/enums';
+import { findProviderByUserId } from '~/db/repositories/providers.repository';
 import { record } from '~/services/audit.service';
 import { buildContext, type AuthSession } from '~/services/context';
 import { auth } from '~/utils/auth.server';
 import {
   cookieHeadersFromSignInResponse,
-  isPlatformAdminRole,
-  redirectIfPlatformAdmin,
+  isProviderRole,
+  redirectIfProvider,
 } from '~/utils/session.server';
 
 import type { Route } from './+types/login';
 
 export async function loader({ request }: Route.LoaderArgs) {
-  await redirectIfPlatformAdmin(request);
+  await redirectIfProvider(request);
   return null;
 }
 
@@ -51,7 +52,7 @@ export async function action({ request }: Route.ActionArgs) {
       user: AuthSession['user'];
     };
 
-    if (!isPlatformAdminRole(signInResult.user?.role)) {
+    if (!isProviderRole(signInResult.user?.role)) {
       await auth.api.signOut({
         headers: cookieHeadersFromSignInResponse(response),
       });
@@ -59,10 +60,25 @@ export async function action({ request }: Route.ActionArgs) {
       await record(ctx, {
         action: AuditAction.LOGIN_FAILED,
         entityType: 'session',
-        metadata: { email, reason: 'not_platform_admin' },
+        metadata: { email, reason: 'not_provider' },
       });
 
-      return { error: 'Esta cuenta no tiene acceso de administrador de plataforma.' };
+      return { error: 'Esta cuenta no tiene acceso de prestador.' };
+    }
+
+    const provider = await findProviderByUserId(signInResult.user.id);
+    if (!provider) {
+      await auth.api.signOut({
+        headers: cookieHeadersFromSignInResponse(response),
+      });
+
+      await record(ctx, {
+        action: AuditAction.LOGIN_FAILED,
+        entityType: 'session',
+        metadata: { email, reason: 'provider_profile_missing' },
+      });
+
+      return { error: 'Esta cuenta de prestador no está activa.' };
     }
 
     const authedCtx = buildContext(request, {
@@ -84,7 +100,7 @@ export async function action({ request }: Route.ActionArgs) {
       metadata: { email: signInResult.user.email },
     });
 
-    throw redirect('/admin', { headers: response.headers });
+    throw redirect('/provider', { headers: response.headers });
   } catch (error) {
     if (error instanceof Response) {
       throw error;
@@ -104,19 +120,19 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: 'Iniciar sesión — Health EMR' }];
 }
 
-export default function AdminLogin() {
+export default function ProviderLogin() {
   const actionData = useActionData<typeof action>();
 
   return (
     <LoginPageShell
-      eyebrow="Administración de plataforma"
+      eyebrow="Portal de prestadores"
       title="Iniciar sesión"
-      description="Accede al área de administración de la plataforma. Las cuentas de prestadores usan un portal separado."
+      description="Accede a tu panel clínico. Los administradores de plataforma usan un portal separado."
       footer={
         <p className="text-center text-sm text-slate-500">
-          ¿Eres prestador?{' '}
-          <Link to="/provider/login" className="font-semibold text-cyan-600 hover:text-cyan-800">
-            Ir al portal de prestadores
+          ¿Eres administrador?{' '}
+          <Link to="/admin/login" className="font-semibold text-cyan-600 hover:text-cyan-800">
+            Ir al portal de administración
           </Link>
         </p>
       }

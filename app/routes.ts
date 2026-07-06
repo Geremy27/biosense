@@ -16,4 +16,17 @@ export default [
       route('users/:id', 'routes/admin/users/$id.tsx'),
     ]),
   ]),
+
+  ...prefix('provider', [
+    route('login', 'routes/provider/login.tsx'),
+    route('', 'routes/provider/_layout.tsx', [
+      index('routes/provider/index.tsx'),
+      route('patients', 'routes/provider/patients/index.tsx'),
+      route('patients/new', 'routes/provider/patients/new.tsx'),
+      route('patients/:id', 'routes/provider/patients/$id/_layout.tsx', [
+        index('routes/provider/patients/$id/index.tsx'),
+        route('edit', 'routes/provider/patients/$id/edit.tsx'),
+      ]),
+    ]),
+  ]),
 ] satisfies RouteConfig;

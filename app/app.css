@@ -115,8 +115,16 @@ body {
     @apply flex flex-col items-center rounded-xl bg-white px-6 py-12 text-center shadow-sm;
   }
 
+  .admin-shell {
+    @apply flex h-screen overflow-hidden bg-white;
+  }
+
+  .admin-sidebar {
+    @apply flex h-full shrink-0 flex-col overflow-hidden border-r border-cyan-200 bg-white transition-all duration-200;
+  }
+
   .admin-content {
-    @apply flex-1 overflow-y-auto bg-gradient-to-b from-white via-blue-50 to-white p-6 md:p-10;
+    @apply min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-white via-blue-50 to-white p-6 md:p-10;
   }
 
   .aurora-bg {

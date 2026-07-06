@@ -1,6 +1,6 @@
 import type { IdentificationType, Sex } from '~/db/models/enums';
 import {
-  formatIdentificationType,
+  formatIdentification,
   formatPatientName,
   formatSex,
 } from '~/utils/patient-display';
@@ -46,7 +46,7 @@ export function PatientSummary({ patient }: PatientSummaryProps) {
   const fields: SummaryField[] = [
     {
       label: 'Identificación',
-      value: `${formatIdentificationType(patient.identificationType)} ${patient.identificationNumber}`,
+      value: formatIdentification(patient.identificationType, patient.identificationNumber),
     },
     {
       label: 'Fecha de nacimiento',

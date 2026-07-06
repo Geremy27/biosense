@@ -1,7 +1,10 @@
-import { Form, Link, redirect, useActionData, useLoaderData } from 'react-router';
+import { Form, redirect, useActionData, useLoaderData } from 'react-router';
 
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
+import { FormActions } from '~/components/forms/form-actions';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
+import { SubmitButton } from '~/components/forms/submit-button';
 import {
   deleteOrganization,
   getOrganization,
@@ -75,6 +78,7 @@ export default function EditOrganization() {
       <Form method="post" className="mt-8 card space-y-4">
         <input type="hidden" name="intent" value="update" />
 
+        <FormPendingFieldset className="space-y-4" intent="update">
         <div>
           <label htmlFor="name" className="label">
             Nombre
@@ -92,29 +96,28 @@ export default function EditOrganization() {
           ) : null}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button type="submit" className="btn-primary">
-            Guardar cambios
-          </button>
-          <Link to="/admin/organizations" className="btn-ghost">
-            Volver
-          </Link>
-        </div>
+        <FormActions
+          submitLabel="Guardar cambios"
+          loadingLabel="Guardando…"
+          cancelTo="/admin/organizations"
+          cancelLabel="Volver"
+          intent="update"
+        />
+        </FormPendingFieldset>
       </Form>
 
       <Form method="post" className="mt-8 card border border-red-100">
         <input type="hidden" name="intent" value="delete" />
+        <FormPendingFieldset intent="delete">
         <h3 className="font-bold text-cyan-950">Desactivar organización</h3>
         <p className="mt-2 text-sm text-slate-500">
           Desactiva esta organización de forma reversible. Revisa primero los prestadores
           vinculados.
         </p>
-        <button
-          type="submit"
-          className="mt-4 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-        >
+        <SubmitButton loadingLabel="Desactivando…" variant="danger" className="mt-4" pendingOptions={{ intent: 'delete' }}>
           Desactivar
-        </button>
+        </SubmitButton>
+        </FormPendingFieldset>
       </Form>
     </div>
   );

@@ -45,12 +45,8 @@ export function AppSidebarLayout({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <aside
-        className={`flex shrink-0 flex-col border-r border-cyan-200 bg-white transition-all duration-200 ${
-          collapsed ? 'w-16' : 'w-64'
-        }`}
-      >
+    <div className="admin-shell">
+      <aside className={`admin-sidebar ${collapsed ? 'w-16' : 'w-64'}`}>
         <div className={`border-b border-cyan-100 ${collapsed ? 'px-2 py-4' : 'px-4 py-5'}`}>
           <div
             className={`flex items-center ${collapsed ? 'flex-col gap-3' : 'justify-between gap-3'}`}

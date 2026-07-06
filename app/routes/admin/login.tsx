@@ -2,6 +2,8 @@ import { Form, Link, redirect, useActionData } from 'react-router';
 import { LoginPageShell } from '~/components/auth/login-page-shell';
 import { FormError } from '~/components/forms/form-error';
 import { FormField } from '~/components/forms/form-field';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
+import { SubmitButton } from '~/components/forms/submit-button';
 import { AuditAction } from '~/db/models/enums';
 import { record } from '~/services/audit.service';
 import { buildContext, type AuthSession } from '~/services/context';
@@ -122,33 +124,35 @@ export default function AdminLogin() {
       }
     >
       <Form method="post" className="mt-8 space-y-4">
-        <FormField id="email" label="Correo electrónico">
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="input"
-          />
-        </FormField>
+        <FormPendingFieldset className="space-y-4">
+          <FormField id="email" label="Correo electrónico">
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="input"
+            />
+          </FormField>
 
-        <FormField id="password" label="Contraseña">
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            className="input"
-          />
-        </FormField>
+          <FormField id="password" label="Contraseña">
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              className="input"
+            />
+          </FormField>
 
-        {actionData?.error ? <FormError message={actionData.error} /> : null}
+          {actionData?.error ? <FormError message={actionData.error} /> : null}
 
-        <button type="submit" className="btn-primary w-full">
-          Iniciar sesión
-        </button>
+          <SubmitButton loadingLabel="Iniciando sesión…" className="w-full">
+            Iniciar sesión
+          </SubmitButton>
+        </FormPendingFieldset>
       </Form>
     </LoginPageShell>
   );

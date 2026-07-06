@@ -28,9 +28,19 @@ export function formatPatientName(patient: PatientNameFields) {
     .join(' ');
 }
 
-// Formats an identification type enum value for display.
+// Formats an identification type enum value for display (full label — forms, etc.).
 export function formatIdentificationType(type: IdentificationType) {
   return IDENTIFICATION_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+}
+
+// Formats an identification type as its abbreviation (CC, TI, CE, PA).
+export function formatIdentificationAbbreviation(type: IdentificationType) {
+  return type;
+}
+
+// Formats identification type + number for tables and read-only views.
+export function formatIdentification(type: IdentificationType, number: string) {
+  return `${formatIdentificationAbbreviation(type)} ${number}`;
 }
 
 // Formats a sex enum value for display.

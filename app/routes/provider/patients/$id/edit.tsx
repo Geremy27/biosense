@@ -1,6 +1,8 @@
 import { Form, redirect, useActionData, useOutletContext } from 'react-router';
 
 import { PatientForm } from '~/components/patients/patient-form';
+import { SubmitButton } from '~/components/forms/submit-button';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import {
   deletePatient,
   PatientValidationError,
@@ -82,16 +84,15 @@ export default function EditPatient() {
 
       <Form method="post" className="mt-8 card border border-red-100">
         <input type="hidden" name="intent" value="delete" />
+        <FormPendingFieldset intent="delete">
         <h3 className="font-bold text-cyan-950">Desactivar paciente</h3>
         <p className="mt-2 text-sm text-slate-500">
           Desactiva este paciente de forma reversible. El historial clínico se conservará.
         </p>
-        <button
-          type="submit"
-          className="mt-4 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-        >
+        <SubmitButton loadingLabel="Desactivando…" variant="danger" className="mt-4" pendingOptions={{ intent: 'delete' }}>
           Desactivar
-        </button>
+        </SubmitButton>
+        </FormPendingFieldset>
       </Form>
     </>
   );

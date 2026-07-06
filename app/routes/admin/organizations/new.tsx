@@ -1,7 +1,9 @@
-import { Form, Link, redirect, useActionData } from 'react-router';
+import { Form, redirect, useActionData } from 'react-router';
 
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
+import { FormActions } from '~/components/forms/form-actions';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { createOrganization } from '~/services/organizations.service';
 import { buildActorContext } from '~/utils/session.server';
 
@@ -39,6 +41,7 @@ export default function NewOrganization() {
       <PageHeader eyebrow="Organizaciones" title="Nueva organización" />
 
       <Form method="post" className="mt-8 card space-y-4">
+        <FormPendingFieldset className="space-y-4">
         <div>
           <label htmlFor="name" className="label">
             Nombre
@@ -49,14 +52,12 @@ export default function NewOrganization() {
           ) : null}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button type="submit" className="btn-primary">
-            Crear organización
-          </button>
-          <Link to="/admin/organizations" className="btn-ghost">
-            Cancelar
-          </Link>
-        </div>
+        <FormActions
+          submitLabel="Crear organización"
+          loadingLabel="Creando…"
+          cancelTo="/admin/organizations"
+        />
+        </FormPendingFieldset>
       </Form>
     </div>
   );

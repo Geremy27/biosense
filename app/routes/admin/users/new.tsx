@@ -3,6 +3,8 @@ import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
+import { FormActions } from '~/components/forms/form-actions';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { UserRole } from '~/db/models/enums';
 import { listOrganizations } from '~/services/organizations.service';
 import { createUser, UserValidationError } from '~/services/users.service';
@@ -108,6 +110,7 @@ export default function NewUser() {
       <PageHeader eyebrow="Usuarios" title="Nuevo usuario" />
 
       <Form method="post" className="mt-8 card space-y-4">
+        <FormPendingFieldset className="space-y-4">
         <div>
           <label htmlFor="name" className="label">
             Nombre
@@ -197,14 +200,12 @@ export default function NewUser() {
           <p className="text-sm text-red-600">{actionData.errors._form}</p>
         ) : null}
 
-        <div className="flex gap-3 pt-2">
-          <button type="submit" className="btn-primary">
-            Crear usuario
-          </button>
-          <Link to="/admin/users" className="btn-ghost">
-            Cancelar
-          </Link>
-        </div>
+        <FormActions
+          submitLabel="Crear usuario"
+          loadingLabel="Creando…"
+          cancelTo="/admin/users"
+        />
+        </FormPendingFieldset>
       </Form>
     </div>
   );

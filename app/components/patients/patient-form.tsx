@@ -3,6 +3,7 @@ import { Form } from 'react-router';
 import { FormField } from '~/components/forms/form-field';
 import { FieldError } from '~/components/forms/field-error';
 import { FormActions } from '~/components/forms/form-actions';
+import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import type { PatientInput } from '~/validation/patients';
 import { IDENTIFICATION_TYPE_OPTIONS, SEX_OPTIONS } from '~/utils/patient-display';
 
@@ -17,6 +18,7 @@ type PatientFormProps = {
 export function PatientForm({ defaultValues, errors, submitLabel, cancelTo }: PatientFormProps) {
   return (
     <Form method="post" className="card space-y-8">
+      <FormPendingFieldset className="space-y-8" excludeIntent="delete">
       <section className="space-y-4">
         <h3 className="text-lg font-bold text-cyan-950">Identificación</h3>
 
@@ -233,7 +235,13 @@ export function PatientForm({ defaultValues, errors, submitLabel, cancelTo }: Pa
 
       {errors?._form ? <p className="text-sm text-red-600">{errors._form}</p> : null}
 
-      <FormActions submitLabel={submitLabel} cancelTo={cancelTo} />
+      <FormActions
+        submitLabel={submitLabel}
+        loadingLabel={submitLabel.startsWith('Crear') ? 'Creando…' : 'Guardando…'}
+        cancelTo={cancelTo}
+        excludeIntent="delete"
+      />
+      </FormPendingFieldset>
     </Form>
   );
 }

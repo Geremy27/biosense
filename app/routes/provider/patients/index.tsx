@@ -6,7 +6,7 @@ import { PageHeader } from '~/components/ui/page-header';
 import { listPatients } from '~/services/patients.service';
 import { buildActorContext } from '~/utils/session.server';
 import {
-  formatIdentificationType,
+  formatIdentification,
   formatPatientName,
 } from '~/utils/patient-display';
 
@@ -68,8 +68,10 @@ export default function PatientsIndex({ loaderData }: Route.ComponentProps) {
                     {formatPatientName(patient)}
                   </td>
                   <td className="data-table-td text-slate-600">
-                    {formatIdentificationType(patient.identificationType)}{' '}
-                    {patient.identificationNumber}
+                    {formatIdentification(
+                      patient.identificationType,
+                      patient.identificationNumber,
+                    )}
                   </td>
                   <td className="data-table-td text-slate-600">{patient.phone}</td>
                   <td className="data-table-td text-slate-600">

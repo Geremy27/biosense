@@ -1,0 +1,29 @@
+---
+description: Medeloop-inspired design system — standard Tailwind only
+globs: app/**/*.tsx,app/**/*.css
+alwaysApply: false
+---
+
+# Design system
+
+Full reference: `docs/design-system.md`. Use **only standard Tailwind classes** — no arbitrary values (`text-[…]`, `shadow-[…]`, etc.).
+
+## Quick tokens
+
+- **Font:** Open Sans (`font-sans`)
+- **Headings:** `text-cyan-950 font-bold` (Medeloop navy → cyan-950)
+- **Body:** `text-slate-700`, secondary `text-slate-500`
+- **Accent:** `text-cyan-600` / `bg-cyan-50` (Medeloop teal → cyan-600)
+- **Primary CTA:** `btn-primary` or `bg-slate-700 text-white rounded-lg font-semibold shadow-md`
+- **Ghost CTA:** `btn-ghost` or `border border-slate-300 text-cyan-950 rounded-lg`
+- **Cards:** `card` (`shadow-sm`) or `card-elevated` (`shadow-lg border-cyan-100`)
+- **Layout:** `page-shell` (`max-w-7xl px-5 md:px-16`), sections `py-16`
+- **Eyebrow:** `eyebrow` (`text-xs uppercase tracking-widest text-cyan-600`)
+
+## Rules
+
+1. Light-first UI — white backgrounds, `bg-gradient-to-b from-white via-blue-50 to-white` between sections
+2. `cyan-950` + `cyan-600` for brand; `slate-*` for neutrals
+3. App buttons use `rounded-lg` (not `rounded-full`) — see analytics.medeloop.ai
+4. Aurora blobs: `rounded-full blur-3xl opacity-20` with `bg-purple-300` / `bg-cyan-200`
+5. Header: `h-16 sticky top-0 bg-white/90 backdrop-blur-xl border-b border-cyan-200`

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "drizzle-kit migrate && tsx scripts/seed-platform-admin.ts gerpardo27+adminbiosense@gmail.com DPvbfqHs6sdnWa \"German Pardo\" && react-router build",
+    "build": "drizzle-kit migrate && react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",

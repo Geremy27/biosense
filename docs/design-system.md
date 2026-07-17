@@ -1,6 +1,6 @@
 # Design System (standard Tailwind)
 
-> Visual reference for the Health EMR app: clean healthcare SaaS with dark cyan headings, teal accents, soft aurora gradients, glassy navigation, and softly rounded buttons.
+> Visual reference for the Biosense app: clean healthcare SaaS with dark cyan headings, teal accents, soft aurora gradients, glassy navigation, and softly rounded buttons.
 >
 > **For Cursor:** Use **only built-in Tailwind utilities**. Design tokens are mapped to the nearest standard Tailwind class. Reuse component classes from `app/app.css` when possible.
 
@@ -213,8 +213,8 @@ Used in admin and provider portals via `AppSidebarLayout`.
 
 | Portal | Eyebrow | Title |
 | ------ | ------- | ----- |
-| Admin | Administración | Health EMR |
-| Provider | Consultorio | Health EMR |
+| Admin | Administración | Biosense |
+| Provider | Consultorio | Biosense |
 
 ### Page header
 

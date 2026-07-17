@@ -1,6 +1,7 @@
 import { FileText, ShieldCheck } from 'lucide-react';
 import { Form, Link, redirect, useActionData, useOutletContext } from 'react-router';
 
+import { APP_NAME } from '~/brand';
 import { FieldError } from '~/components/forms/field-error';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { SubmitButton } from '~/components/forms/submit-button';
@@ -44,7 +45,7 @@ export default function NewLabReport() {
         <h2 className="mt-1 text-2xl font-bold text-cyan-950">Subir informe</h2>
         <p className="mt-2 text-sm text-slate-500">
           El PDF será analizado para identificar y extraer resultados de sangre, pero no se
-          almacenará en Health EMR por ahora.
+          almacenará en {APP_NAME} por ahora.
         </p>
       </div>
 

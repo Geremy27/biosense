@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, Info, Loader2 } from 'lucide-react';
 import { Link, redirect, useOutletContext } from 'react-router';
 
+import { APP_NAME } from '~/brand';
 import { LabReportReviewForm } from '~/components/labs/lab-report-review-form';
 import { StatusBadge } from '~/components/ui/status-badge';
 import { LabReportStatus } from '~/db/models/enums';
@@ -81,7 +82,7 @@ export default function LabReportDetail({ loaderData, actionData }: Route.Compon
             {report.extractionError || 'No fue posible analizar este documento.'}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            El PDF no se conserva en Health EMR por ahora. Vuelve a subir el informe para intentar
+            El PDF no se conserva en {APP_NAME} por ahora. Vuelve a subir el informe para intentar
             una nueva extracción.
           </p>
           <Link to={`/provider/patients/${patient.id}/labs/new`} className="btn-primary mt-6">
@@ -145,12 +146,12 @@ export default function LabReportDetail({ loaderData, actionData }: Route.Compon
             <table className="data-table">
               <thead className="data-table-head">
                 <tr>
-                  <th>Parámetro</th>
-                  <th>Valor</th>
-                  <th>Unidad</th>
-                  <th>Referencia</th>
-                  <th>Óptimo</th>
-                  <th>Indicador</th>
+                  <th className="data-table-th">Parámetro</th>
+                  <th className="data-table-th">Valor</th>
+                  <th className="data-table-th">Unidad</th>
+                  <th className="data-table-th">Referencia</th>
+                  <th className="data-table-th">Óptimo</th>
+                  <th className="data-table-th">Indicador</th>
                 </tr>
               </thead>
               <tbody>

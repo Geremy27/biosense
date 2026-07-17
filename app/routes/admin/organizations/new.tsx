@@ -1,5 +1,6 @@
 import { Form, redirect, useActionData } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
 import { FormActions } from '~/components/forms/form-actions';
@@ -44,7 +45,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Nueva organización — Health EMR' }];
+  return [{ title: pageTitle('Nueva organización') }];
 }
 
 export default function NewOrganization() {

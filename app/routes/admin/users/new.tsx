@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Form, Link, useActionData, useLoaderData } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
 import { FormActions } from '~/components/forms/form-actions';
@@ -48,7 +49,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Nuevo usuario — Health EMR' }];
+  return [{ title: pageTitle('Nuevo usuario') }];
 }
 
 export default function NewUser() {

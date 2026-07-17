@@ -1,6 +1,7 @@
 import { Building2, LayoutDashboard, Users } from 'lucide-react';
 import { Outlet, redirect, useLoaderData } from 'react-router';
 
+import { APP_INITIAL, APP_NAME } from '~/brand';
 import { AppSidebarLayout, type SidebarNavItem } from '~/components/layout/app-sidebar-layout';
 import { auth } from '~/utils/auth.server';
 import { requirePlatformAdmin } from '~/utils/session.server';
@@ -41,8 +42,8 @@ export default function AdminLayout() {
   return (
     <AppSidebarLayout
       brandEyebrow="Administración"
-      brandTitle="Health EMR"
-      brandInitial="H"
+      brandTitle={APP_NAME}
+      brandInitial={APP_INITIAL}
       navItems={NAV_ITEMS}
       user={data.user}
     >

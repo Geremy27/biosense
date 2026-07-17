@@ -8,6 +8,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "seed:admin": "tsx scripts/seed-platform-admin.ts",
+    "seed:recommendation-prompt": "tsx scripts/seed-recommendation-prompt.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "generate:schema": "drizzle-kit generate",

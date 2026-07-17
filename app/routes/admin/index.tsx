@@ -1,4 +1,5 @@
 import { Building2, Users } from 'lucide-react';
+import { pageTitle } from '~/brand';
 import { PageHeader } from '~/components/ui/page-header';
 import { StatCard } from '~/components/ui/stat-card';
 import { buildActorContext } from '~/utils/session.server';
@@ -21,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Panel — Health EMR' }];
+  return [{ title: pageTitle('Panel') }];
 }
 
 export default function AdminHome({ loaderData }: Route.ComponentProps) {

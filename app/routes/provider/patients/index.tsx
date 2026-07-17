@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Users } from 'lucide-react';
 
+import { pageTitle } from '~/brand';
 import { EmptyState } from '~/components/ui/empty-state';
 import { PageHeader } from '~/components/ui/page-header';
 import { listPatients } from '~/services/patients.service';
@@ -20,7 +21,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Pacientes — Health EMR' }];
+  return [{ title: pageTitle('Pacientes') }];
 }
 
 export default function PatientsIndex({ loaderData }: Route.ComponentProps) {

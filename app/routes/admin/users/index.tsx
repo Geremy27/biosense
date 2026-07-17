@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { UserRole } from '~/db/models/enums';
 import { EmptyState } from '~/components/ui/empty-state';
 import { FilterTabs } from '~/components/ui/filter-tabs';
@@ -30,7 +31,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Usuarios — Health EMR' }];
+  return [{ title: pageTitle('Usuarios') }];
 }
 
 export default function UsersIndex({ loaderData }: Route.ComponentProps) {

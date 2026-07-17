@@ -1,4 +1,4 @@
-import { ClipboardList, FlaskConical } from 'lucide-react';
+import { ClipboardList, FlaskConical, Lightbulb } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router';
 
 import { PatientSection } from '~/components/patients/patient-section';
@@ -41,6 +41,26 @@ export default function PatientView() {
             className="mt-4 inline-flex font-semibold text-cyan-600 hover:text-cyan-800"
           >
             Ver laboratorios →
+          </Link>
+        </div>
+      </PatientSection>
+
+      <PatientSection
+        title="Recomendaciones"
+        description="Interpretación clínica y plan de estilo de vida basados en laboratorios confirmados."
+        icon={Lightbulb}
+      >
+        <div className="rounded-lg bg-cyan-50 px-4 py-6">
+          <p className="text-sm font-semibold text-cyan-950">Medicina funcional</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Genera recomendaciones a partir de un laboratorio confirmado. Puedes editar el prompt
+            en cada generación.
+          </p>
+          <Link
+            to={`/provider/patients/${patient.id}/recommendations`}
+            className="mt-4 inline-flex font-semibold text-cyan-600 hover:text-cyan-800"
+          >
+            Ver recomendaciones →
           </Link>
         </div>
       </PatientSection>

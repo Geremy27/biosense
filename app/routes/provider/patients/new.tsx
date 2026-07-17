@@ -1,5 +1,6 @@
 import { redirect, useActionData } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { PatientForm } from '~/components/patients/patient-form';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
@@ -30,7 +31,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Nuevo paciente — Health EMR' }];
+  return [{ title: pageTitle('Nuevo paciente') }];
 }
 
 export default function NewPatient() {

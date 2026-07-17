@@ -3,6 +3,7 @@ import { findProviderByUserId } from '~/db/repositories/providers.repository';
 import { LayoutDashboard, Users } from 'lucide-react';
 import { Outlet, redirect } from 'react-router';
 
+import { APP_INITIAL, APP_NAME } from '~/brand';
 import { AppSidebarLayout, type SidebarNavItem } from '~/components/layout/app-sidebar-layout';
 import { auth } from '~/utils/auth.server';
 import { requireProvider } from '~/utils/session.server';
@@ -45,8 +46,8 @@ export default function ProviderLayout({ loaderData }: Route.ComponentProps) {
   return (
     <AppSidebarLayout
       brandEyebrow="Consultorio"
-      brandTitle="Health EMR"
-      brandInitial="H"
+      brandTitle={APP_NAME}
+      brandInitial={APP_INITIAL}
       navItems={NAV_ITEMS}
       user={loaderData.user}
     >

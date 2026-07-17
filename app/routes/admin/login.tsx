@@ -1,4 +1,5 @@
 import { Form, Link, redirect, useActionData } from 'react-router';
+import { pageTitle } from '~/brand';
 import { LoginPageShell } from '~/components/auth/login-page-shell';
 import { FormError } from '~/components/forms/form-error';
 import { FormField } from '~/components/forms/form-field';
@@ -103,7 +104,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Iniciar sesión — Health EMR' }];
+  return [{ title: pageTitle('Iniciar sesión') }];
 }
 
 export default function AdminLogin() {

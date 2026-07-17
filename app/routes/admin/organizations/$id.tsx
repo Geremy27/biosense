@@ -1,5 +1,6 @@
 import { Form, redirect, useActionData, useLoaderData } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
 import { FormActions } from '~/components/forms/form-actions';
@@ -72,7 +73,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData.organization.name} — Health EMR` }];
+  return [{ title: pageTitle(loaderData.organization.name) }];
 }
 
 export default function EditOrganization() {

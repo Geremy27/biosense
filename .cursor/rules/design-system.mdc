@@ -1,5 +1,5 @@
 ---
-description: Health EMR design system — standard Tailwind only
+description: Biosense design system — standard Tailwind only
 globs: app/**/*.tsx,app/**/*.css
 alwaysApply: false
 ---

@@ -1,6 +1,7 @@
 import { Building2 } from 'lucide-react';
 import { Link } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { EmptyState } from '~/components/ui/empty-state';
 import { PageHeader } from '~/components/ui/page-header';
 import { listOrganizations } from '~/services/organizations.service';
@@ -17,7 +18,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: 'Organizaciones — Health EMR' }];
+  return [{ title: pageTitle('Organizaciones') }];
 }
 
 export default function OrganizationsIndex({ loaderData }: Route.ComponentProps) {

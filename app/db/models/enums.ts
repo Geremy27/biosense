@@ -98,3 +98,17 @@ export const labReportStatus = pgEnum('lab_report_status', [
   LabReportStatus.CONFIRMED,
   LabReportStatus.FAILED,
 ]);
+
+export enum ClinicalRecommendationStatus {
+  GENERATING = 'generating',
+  PENDING_REVIEW = 'pending_review',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed',
+}
+
+export const clinicalRecommendationStatus = pgEnum('clinical_recommendation_status', [
+  ClinicalRecommendationStatus.GENERATING,
+  ClinicalRecommendationStatus.PENDING_REVIEW,
+  ClinicalRecommendationStatus.CONFIRMED,
+  ClinicalRecommendationStatus.FAILED,
+]);

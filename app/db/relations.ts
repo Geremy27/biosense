@@ -2,11 +2,13 @@ import { relations } from 'drizzle-orm';
 
 import { auditLogs } from './models/audit';
 import { account, session } from './models/auth';
+import { clinicalRecommendations } from './models/clinical-recommendations';
 import { labAnalytes } from './models/lab-analytes';
 import { labReports } from './models/lab-reports';
 import { organizations } from './models/organizations';
 import { patients } from './models/patients';
 import { providers } from './models/providers';
+import { recommendationPrompts } from './models/recommendation-prompts';
 import { users } from './models/users';
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -15,6 +17,13 @@ export const usersRelations = relations(users, ({ many }) => ({
   providers: many(providers),
   auditLogs: many(auditLogs),
   confirmedLabReports: many(labReports),
+  createdRecommendationPrompts: many(recommendationPrompts),
+  createdClinicalRecommendations: many(clinicalRecommendations, {
+    relationName: 'createdClinicalRecommendations',
+  }),
+  confirmedClinicalRecommendations: many(clinicalRecommendations, {
+    relationName: 'confirmedClinicalRecommendations',
+  }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -35,6 +44,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   providers: many(providers),
   patients: many(patients),
   labReports: many(labReports),
+  clinicalRecommendations: many(clinicalRecommendations),
 }));
 
 export const providersRelations = relations(providers, ({ one, many }) => ({
@@ -62,6 +72,7 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   auditLogs: many(auditLogs),
   labReports: many(labReports),
   labAnalytes: many(labAnalytes),
+  clinicalRecommendations: many(clinicalRecommendations),
 }));
 
 export const labReportsRelations = relations(labReports, ({ one, many }) => ({
@@ -82,6 +93,7 @@ export const labReportsRelations = relations(labReports, ({ one, many }) => ({
     references: [users.id],
   }),
   analytes: many(labAnalytes),
+  clinicalRecommendations: many(clinicalRecommendations),
 }));
 
 export const labAnalytesRelations = relations(labAnalytes, ({ one }) => ({
@@ -92,6 +104,43 @@ export const labAnalytesRelations = relations(labAnalytes, ({ one }) => ({
   patient: one(patients, {
     fields: [labAnalytes.patientId],
     references: [patients.id],
+  }),
+}));
+
+export const recommendationPromptsRelations = relations(recommendationPrompts, ({ one, many }) => ({
+  createdByUser: one(users, {
+    fields: [recommendationPrompts.createdByUserId],
+    references: [users.id],
+  }),
+  clinicalRecommendations: many(clinicalRecommendations),
+}));
+
+export const clinicalRecommendationsRelations = relations(clinicalRecommendations, ({ one }) => ({
+  patient: one(patients, {
+    fields: [clinicalRecommendations.patientId],
+    references: [patients.id],
+  }),
+  organization: one(organizations, {
+    fields: [clinicalRecommendations.organizationId],
+    references: [organizations.id],
+  }),
+  labReport: one(labReports, {
+    fields: [clinicalRecommendations.labReportId],
+    references: [labReports.id],
+  }),
+  prompt: one(recommendationPrompts, {
+    fields: [clinicalRecommendations.promptId],
+    references: [recommendationPrompts.id],
+  }),
+  createdByUser: one(users, {
+    fields: [clinicalRecommendations.createdByUserId],
+    references: [users.id],
+    relationName: 'createdClinicalRecommendations',
+  }),
+  confirmedByUser: one(users, {
+    fields: [clinicalRecommendations.confirmedByUserId],
+    references: [users.id],
+    relationName: 'confirmedClinicalRecommendations',
   }),
 }));
 

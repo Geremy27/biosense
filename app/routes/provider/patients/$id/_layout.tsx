@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 
+import { pageTitle } from '~/brand';
 import { PatientSubNav } from '~/components/patients/patient-sub-nav';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
@@ -21,7 +22,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${formatPatientName(loaderData.patient)} — Health EMR` }];
+  return [{ title: pageTitle(formatPatientName(loaderData.patient)) }];
 }
 
 export default function PatientLayout({ loaderData }: Route.ComponentProps) {

@@ -14,6 +14,8 @@ export default [
       route('users', 'routes/admin/users/index.tsx'),
       route('users/new', 'routes/admin/users/new.tsx'),
       route('users/:id', 'routes/admin/users/$id.tsx'),
+      route('recommendation-prompts', 'routes/admin/recommendation-prompts/index.tsx'),
+      route('recommendation-prompts/:id', 'routes/admin/recommendation-prompts/$id.tsx'),
     ]),
   ]),
 
@@ -29,6 +31,12 @@ export default [
         route('labs', 'routes/provider/patients/$id/labs/index.tsx'),
         route('labs/new', 'routes/provider/patients/$id/labs/new.tsx'),
         route('labs/:reportId', 'routes/provider/patients/$id/labs/$reportId.tsx'),
+        route('recommendations', 'routes/provider/patients/$id/recommendations/index.tsx'),
+        route('recommendations/new', 'routes/provider/patients/$id/recommendations/new.tsx'),
+        route(
+          'recommendations/:recommendationId',
+          'routes/provider/patients/$id/recommendations/$recommendationId.tsx',
+        ),
       ]),
     ]),
   ]),

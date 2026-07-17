@@ -1,4 +1,4 @@
-import { AuditAction } from '~/db/models/enums';
+import { AuditAction, type OrganizationType } from '~/db/models/enums';
 import {
   findOrganizationById,
   findOrganizations,
@@ -13,10 +13,12 @@ import type { ActorContext } from './context';
 
 export type CreateOrganizationInput = {
   name: string;
+  type: OrganizationType;
 };
 
 export type UpdateOrganizationInput = {
   name: string;
+  type: OrganizationType;
 };
 
 // Lists all organizations for platform admins.
@@ -54,13 +56,13 @@ export async function getOrganization(ctx: ActorContext, id: string) {
 export async function createOrganization(ctx: ActorContext, input: CreateOrganizationInput) {
   assertPlatformAdmin(ctx);
 
-  const row = await insertOrganization({ name: input.name });
+  const row = await insertOrganization({ name: input.name, type: input.type });
 
   await record(ctx, {
     action: AuditAction.CREATE,
     entityType: 'organization',
     entityId: row.id,
-    metadata: { name: row.name },
+    metadata: { name: row.name, type: row.type },
   });
 
   return row;
@@ -75,15 +77,15 @@ export async function updateOrganizationById(
   assertPlatformAdmin(ctx);
 
   const before = await findOrganizationById(id);
-  const row = await updateOrganization(id, { name: input.name });
+  const row = await updateOrganization(id, { name: input.name, type: input.type });
 
   await record(ctx, {
     action: AuditAction.UPDATE,
     entityType: 'organization',
     entityId: id,
     metadata: {
-      before: before ? { name: before.name } : null,
-      after: row ? { name: row.name } : null,
+      before: before ? { name: before.name, type: before.type } : null,
+      after: row ? { name: row.name, type: row.type } : null,
     },
   });
 
@@ -102,7 +104,7 @@ export async function deleteOrganization(ctx: ActorContext, id: string) {
     entityType: 'organization',
     entityId: id,
     metadata: {
-      before: before ? { name: before.name } : null,
+      before: before ? { name: before.name, type: before.type } : null,
     },
   });
 

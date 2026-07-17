@@ -4,21 +4,42 @@ import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
 import { FormActions } from '~/components/forms/form-actions';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
+import { OrganizationType } from '~/db/models/enums';
 import { createOrganization } from '~/services/organizations.service';
+import { ORGANIZATION_TYPE_OPTIONS } from '~/utils/organization-display';
 import { buildActorContext } from '~/utils/session.server';
 
 import type { Route } from './+types/new';
 
+function parseOrganizationType(value: string): OrganizationType | null {
+  if (value === OrganizationType.PERSONA_NATURAL || value === OrganizationType.PERSONA_JURIDICA) {
+    return value;
+  }
+
+  return null;
+}
+
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const name = String(formData.get('name') ?? '').trim();
+  const type = parseOrganizationType(String(formData.get('type') ?? ''));
   const ctx = await buildActorContext(request);
 
+  const errors: { name?: string; type?: string } = {};
+
   if (!name) {
-    return { errors: { name: 'El nombre es obligatorio.' } };
+    errors.name = 'El nombre es obligatorio.';
   }
 
-  const organization = await createOrganization(ctx, { name });
+  if (!type) {
+    errors.type = 'El tipo de persona es obligatorio.';
+  }
+
+  if (errors.name || errors.type || !type) {
+    return { errors };
+  }
+
+  const organization = await createOrganization(ctx, { name, type });
   throw redirect(`/admin/organizations/${organization.id}`);
 }
 
@@ -49,6 +70,25 @@ export default function NewOrganization() {
           <input id="name" name="name" type="text" required className="input" />
           {actionData?.errors?.name ? (
             <p className="mt-1 text-sm text-red-600">{actionData.errors.name}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label htmlFor="type" className="label">
+            Tipo de persona
+          </label>
+          <select id="type" name="type" required className="input" defaultValue="">
+            <option value="" disabled>
+              Selecciona un tipo
+            </option>
+            {ORGANIZATION_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {actionData?.errors?.type ? (
+            <p className="mt-1 text-sm text-red-600">{actionData.errors.type}</p>
           ) : null}
         </div>
 

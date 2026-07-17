@@ -26,6 +26,9 @@ export default [
       route('patients/:id', 'routes/provider/patients/$id/_layout.tsx', [
         index('routes/provider/patients/$id/index.tsx'),
         route('edit', 'routes/provider/patients/$id/edit.tsx'),
+        route('labs', 'routes/provider/patients/$id/labs/index.tsx'),
+        route('labs/new', 'routes/provider/patients/$id/labs/new.tsx'),
+        route('labs/:reportId', 'routes/provider/patients/$id/labs/$reportId.tsx'),
       ]),
     ]),
   ]),

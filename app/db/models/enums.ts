@@ -74,3 +74,27 @@ export const auditAction = pgEnum('audit_action', [
   AuditAction.LOGIN,
   AuditAction.LOGIN_FAILED,
 ]);
+
+export enum OrganizationType {
+  PERSONA_NATURAL = 'persona_natural',
+  PERSONA_JURIDICA = 'persona_juridica',
+}
+
+export const organizationType = pgEnum('organization_type', [
+  OrganizationType.PERSONA_NATURAL,
+  OrganizationType.PERSONA_JURIDICA,
+]);
+
+export enum LabReportStatus {
+  EXTRACTING = 'extracting',
+  PENDING_REVIEW = 'pending_review',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed',
+}
+
+export const labReportStatus = pgEnum('lab_report_status', [
+  LabReportStatus.EXTRACTING,
+  LabReportStatus.PENDING_REVIEW,
+  LabReportStatus.CONFIRMED,
+  LabReportStatus.FAILED,
+]);

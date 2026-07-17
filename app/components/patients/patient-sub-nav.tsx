@@ -23,6 +23,12 @@ export function PatientSubNav({ patientId }: PatientSubNavProps) {
       >
         Editar
       </NavLink>
+      <NavLink
+        to={`${basePath}/labs`}
+        className={({ isActive }) => (isActive ? 'filter-tab-active' : 'filter-tab')}
+      >
+        Laboratorios
+      </NavLink>
     </nav>
   );
 }

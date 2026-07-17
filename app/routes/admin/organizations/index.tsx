@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { EmptyState } from '~/components/ui/empty-state';
 import { PageHeader } from '~/components/ui/page-header';
 import { listOrganizations } from '~/services/organizations.service';
+import { formatOrganizationType } from '~/utils/organization-display';
 import { buildActorContext } from '~/utils/session.server';
 
 import type { Route } from './+types/index';
@@ -51,6 +52,7 @@ export default function OrganizationsIndex({ loaderData }: Route.ComponentProps)
             <thead className="data-table-head">
               <tr>
                 <th className="data-table-th">Nombre</th>
+                <th className="data-table-th">Tipo</th>
                 <th className="data-table-th">Creada</th>
                 <th className="data-table-th" />
               </tr>
@@ -59,6 +61,9 @@ export default function OrganizationsIndex({ loaderData }: Route.ComponentProps)
               {loaderData.organizations.map((organization) => (
                 <tr key={organization.id} className="data-table-row">
                   <td className="data-table-td font-medium text-cyan-950">{organization.name}</td>
+                  <td className="data-table-td text-slate-600">
+                    {formatOrganizationType(organization.type)}
+                  </td>
                   <td className="data-table-td text-slate-500">
                     {new Date(organization.createdAt).toLocaleDateString('es-CO')}
                   </td>

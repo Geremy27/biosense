@@ -1,5 +1,5 @@
 import { ClipboardList, FlaskConical } from 'lucide-react';
-import { useOutletContext } from 'react-router';
+import { Link, useOutletContext } from 'react-router';
 
 import { PatientSection } from '~/components/patients/patient-section';
 import { PatientSummary } from '~/components/patients/patient-summary';
@@ -31,11 +31,17 @@ export default function PatientView() {
         description="Resultados de exámenes y estudios de laboratorio."
         icon={FlaskConical}
       >
-        <div className="rounded-lg bg-slate-100 px-4 py-8 text-center">
-          <p className="text-sm font-semibold text-slate-500">Próximamente</p>
-          <p className="mt-1 text-sm text-slate-400">
-            Aquí podrás consultar resultados de laboratorio y estudios complementarios.
+        <div className="rounded-lg bg-cyan-50 px-4 py-6">
+          <p className="text-sm font-semibold text-cyan-950">Informes de sangre</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Sube un PDF, revisa los valores extraídos y confírmalos en la historia clínica.
           </p>
+          <Link
+            to={`/provider/patients/${patient.id}/labs`}
+            className="mt-4 inline-flex font-semibold text-cyan-600 hover:text-cyan-800"
+          >
+            Ver laboratorios →
+          </Link>
         </div>
       </PatientSection>
     </div>

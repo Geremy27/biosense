@@ -9,7 +9,9 @@
     "typecheck": "react-router typegen && tsc",
     "seed:admin": "tsx scripts/seed-platform-admin.ts",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "generate:schema": "drizzle-kit generate",
+    "migrate:up": "drizzle-kit migrate"
   },
   "dependencies": {
     "@react-router/node": "8.0.0",
@@ -19,6 +21,7 @@
     "drizzle-orm": "^0.45.2",
     "isbot": "^5.1.36",
     "lucide-react": "^1.23.0",
+    "openai": "^6.48.0",
     "pg": "^8.22.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

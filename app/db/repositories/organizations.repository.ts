@@ -47,7 +47,7 @@ export async function insertOrganization(data: NewOrganization): Promise<Organiz
 // Updates an organization by id and returns the updated row.
 export async function updateOrganization(
   id: string,
-  data: Partial<Pick<OrganizationRow, 'name'>>,
+  data: Partial<Pick<OrganizationRow, 'name' | 'type'>>,
 ): Promise<OrganizationRow | null> {
   const [row] = await db
     .update(organizations)

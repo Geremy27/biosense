@@ -5,14 +5,24 @@ import { PageHeader } from '~/components/ui/page-header';
 import { FormActions } from '~/components/forms/form-actions';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { SubmitButton } from '~/components/forms/submit-button';
+import { OrganizationType } from '~/db/models/enums';
 import {
   deleteOrganization,
   getOrganization,
   updateOrganizationById,
 } from '~/services/organizations.service';
+import { ORGANIZATION_TYPE_OPTIONS } from '~/utils/organization-display';
 import { buildActorContext } from '~/utils/session.server';
 
 import type { Route } from './+types/$id';
+
+function parseOrganizationType(value: string): OrganizationType | null {
+  if (value === OrganizationType.PERSONA_NATURAL || value === OrganizationType.PERSONA_JURIDICA) {
+    return value;
+  }
+
+  return null;
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const ctx = await buildActorContext(request);
@@ -36,12 +46,23 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const name = String(formData.get('name') ?? '').trim();
+  const type = parseOrganizationType(String(formData.get('type') ?? ''));
+
+  const errors: { name?: string; type?: string } = {};
 
   if (!name) {
-    return { errors: { name: 'El nombre es obligatorio.' } };
+    errors.name = 'El nombre es obligatorio.';
   }
 
-  const organization = await updateOrganizationById(ctx, params.id, { name });
+  if (!type) {
+    errors.type = 'El tipo de persona es obligatorio.';
+  }
+
+  if (errors.name || errors.type || !type) {
+    return { errors };
+  }
+
+  const organization = await updateOrganizationById(ctx, params.id, { name, type });
 
   if (!organization) {
     throw new Response('No encontrado', { status: 404 });
@@ -93,6 +114,28 @@ export default function EditOrganization() {
           />
           {actionData?.errors?.name ? (
             <p className="mt-1 text-sm text-red-600">{actionData.errors.name}</p>
+          ) : null}
+        </div>
+
+        <div>
+          <label htmlFor="type" className="label">
+            Tipo de persona
+          </label>
+          <select
+            id="type"
+            name="type"
+            required
+            defaultValue={organization.type}
+            className="input"
+          >
+            {ORGANIZATION_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {actionData?.errors?.type ? (
+            <p className="mt-1 text-sm text-red-600">{actionData.errors.type}</p>
           ) : null}
         </div>
 

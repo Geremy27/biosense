@@ -9,6 +9,29 @@ type RecommendationOutputViewProps = {
   output: RecommendationOutput;
 };
 
+function LifestyleSection({
+  title,
+  item,
+}: {
+  title: string;
+  item: RecommendationOutput['lifestyle']['nutrition'];
+}) {
+  return (
+    <div>
+      <h4 className="font-semibold text-cyan-900">{title}</h4>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+        {item.guidance}
+      </p>
+      {item.rationale ? (
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          <span className="font-medium text-cyan-900">Por qué: </span>
+          {item.rationale}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function RecommendationOutputView({ output }: RecommendationOutputViewProps) {
   return (
     <div className="space-y-6">
@@ -94,40 +117,45 @@ export function RecommendationOutputView({ output }: RecommendationOutputViewPro
         </p>
       </section>
 
-      <section className="card">
+      <section className="card space-y-4">
         <h3 className="text-lg font-bold text-cyan-950">Conclusiones</h3>
-        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
+        <ol className="mt-2 list-decimal space-y-4 pl-5">
           {output.conclusions.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index} className="text-sm leading-relaxed text-slate-700">
+              <p className="font-semibold text-cyan-950">{item.statement}</p>
+              {item.rationale ? (
+                <p className="mt-1 text-slate-600">
+                  <span className="font-medium text-cyan-900">Por qué: </span>
+                  {item.rationale}
+                </p>
+              ) : null}
+            </li>
           ))}
         </ol>
       </section>
 
-      <section className="card">
+      <section className="card space-y-4">
         <h3 className="text-lg font-bold text-cyan-950">Recomendaciones</h3>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
+        <ul className="mt-2 list-disc space-y-4 pl-5">
           {output.recommendations.map((item, index) => (
-            <li key={index}>{item}</li>
+            <li key={index} className="text-sm leading-relaxed text-slate-700">
+              <p className="font-semibold text-cyan-950">{item.action}</p>
+              {item.rationale ? (
+                <p className="mt-1 text-slate-600">
+                  <span className="font-medium text-cyan-900">Por qué: </span>
+                  {item.rationale}
+                </p>
+              ) : null}
+            </li>
           ))}
         </ul>
       </section>
 
       <section className="card space-y-4">
         <h3 className="text-lg font-bold text-cyan-950">Sugerencias de estilo de vida</h3>
-        <div>
-          <h4 className="font-semibold text-cyan-900">1. Nutricional</h4>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{output.lifestyle.nutrition}</p>
-        </div>
-        <div>
-          <h4 className="font-semibold text-cyan-900">2. Ejercicio</h4>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">{output.lifestyle.exercise}</p>
-        </div>
-        <div>
-          <h4 className="font-semibold text-cyan-900">3. Mental y sueño</h4>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {output.lifestyle.mentalAndSleep}
-          </p>
-        </div>
+        <LifestyleSection title="1. Nutricional" item={output.lifestyle.nutrition} />
+        <LifestyleSection title="2. Ejercicio" item={output.lifestyle.exercise} />
+        <LifestyleSection title="3. Mental y sueño" item={output.lifestyle.mentalAndSleep} />
       </section>
 
       <section className="card space-y-4">
@@ -144,7 +172,10 @@ export function RecommendationOutputView({ output }: RecommendationOutputViewPro
               {supplement.dose ? (
                 <p className="mt-1 text-sm font-medium text-slate-700">Dosis: {supplement.dose}</p>
               ) : null}
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{supplement.rationale}</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <span className="font-medium text-cyan-900">Por qué: </span>
+                {supplement.rationale}
+              </p>
               {supplement.requiresMoreLabs ? (
                 <p className="mt-2 text-sm text-amber-800">
                   Falta información de laboratorio

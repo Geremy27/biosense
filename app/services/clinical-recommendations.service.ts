@@ -5,6 +5,7 @@ import {
   findClinicalRecommendationsByPatientId,
   findLabAnalytesByReportId,
   findLabReportByPatientAndId,
+  findMedicalHistoryByPatientAndId,
   findPatientById,
   insertClinicalRecommendation,
   updateClinicalRecommendation,
@@ -52,6 +53,19 @@ export type LabSnapshot = {
     optimalRange: string | null;
     flag: string | null;
   }>;
+};
+
+export type MedicalHistorySnapshot = {
+  title: string;
+  recordedAt: string;
+  chiefComplaint: string | null;
+  personalHistory: string | null;
+  familyHistory: string | null;
+  surgicalHistory: string | null;
+  allergies: string | null;
+  medicationsAndSupplements: string | null;
+  habitsLifestyle: string | null;
+  notes: string | null;
 };
 
 export async function listClinicalRecommendations(ctx: ActorContext, patientId: string) {
@@ -115,6 +129,32 @@ export async function generateClinicalRecommendation(
     });
   }
 
+  let medicalHistorySnapshot: MedicalHistorySnapshot | null = null;
+  if (input.medicalHistoryId) {
+    const medicalHistory = await findMedicalHistoryByPatientAndId(
+      patientId,
+      input.medicalHistoryId,
+    );
+    if (!medicalHistory) {
+      throw new ClinicalRecommendationValidationError({
+        medicalHistoryId: 'Antecedentes no encontrados.',
+      });
+    }
+
+    medicalHistorySnapshot = {
+      title: medicalHistory.title,
+      recordedAt: medicalHistory.recordedAt,
+      chiefComplaint: medicalHistory.chiefComplaint,
+      personalHistory: medicalHistory.personalHistory,
+      familyHistory: medicalHistory.familyHistory,
+      surgicalHistory: medicalHistory.surgicalHistory,
+      allergies: medicalHistory.allergies,
+      medicationsAndSupplements: medicalHistory.medicationsAndSupplements,
+      habitsLifestyle: medicalHistory.habitsLifestyle,
+      notes: medicalHistory.notes,
+    };
+  }
+
   const patientSnapshot = buildPatientSnapshot(patient);
   const labSnapshot: LabSnapshot = {
     collectedAt: labReport.collectedAt,
@@ -130,12 +170,18 @@ export async function generateClinicalRecommendation(
     })),
   };
 
+  const medicationsText =
+    input.medicationsText ??
+    medicalHistorySnapshot?.medicationsAndSupplements ??
+    null;
+
   const model = input.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o';
-  const userPrompt = fillPromptTemplate(input.userPromptTemplate, {
-    patient_json: JSON.stringify(patientSnapshot, null, 2),
-    medications_json: input.medicationsText ?? 'Ninguna reportada',
-    collected_at: labReport.collectedAt ?? 'No indicada',
-    analytes_json: JSON.stringify(labSnapshot.analytes, null, 2),
+  const userPrompt = buildClinicalUserPrompt({
+    patientSnapshot,
+    labSnapshot,
+    medicalHistorySnapshot,
+    medicationsText,
+    instructions: input.instructions,
   });
 
   const promptSnapshot = [
@@ -156,7 +202,8 @@ export async function generateClinicalRecommendation(
     status: ClinicalRecommendationStatus.GENERATING,
     inputPatientSnapshot: patientSnapshot,
     inputLabSnapshot: labSnapshot,
-    inputMedicationsSnapshot: input.medicationsText,
+    inputMedicalHistorySnapshot: medicalHistorySnapshot,
+    inputMedicationsSnapshot: medicationsText,
     createdByUserId: ctx.userId,
   });
 
@@ -167,6 +214,7 @@ export async function generateClinicalRecommendation(
     patientId,
     metadata: {
       labReportId: labReport.id,
+      medicalHistoryId: input.medicalHistoryId,
     },
   });
 
@@ -336,15 +384,46 @@ function calculateAgeYears(birthDate: string) {
   return Math.max(age, 0);
 }
 
-function fillPromptTemplate(
-  template: string,
-  values: Record<'patient_json' | 'medications_json' | 'collected_at' | 'analytes_json', string>,
-) {
-  return template
-    .replaceAll('{{patient_json}}', values.patient_json)
-    .replaceAll('{{medications_json}}', values.medications_json)
-    .replaceAll('{{collected_at}}', values.collected_at)
-    .replaceAll('{{analytes_json}}', values.analytes_json);
+function buildClinicalUserPrompt({
+  patientSnapshot,
+  labSnapshot,
+  medicalHistorySnapshot,
+  medicationsText,
+  instructions,
+}: {
+  patientSnapshot: DeidentifiedPatientSnapshot;
+  labSnapshot: LabSnapshot;
+  medicalHistorySnapshot: MedicalHistorySnapshot | null;
+  medicationsText: string | null;
+  instructions: string;
+}) {
+  const sections = [
+    '## Datos clínicos del paciente (sin identificadores personales)',
+    '',
+    '### Demografía y antropometría',
+    JSON.stringify(patientSnapshot, null, 2),
+    '',
+    '### Antecedentes clínicos',
+    medicalHistorySnapshot
+      ? JSON.stringify(medicalHistorySnapshot, null, 2)
+      : 'No se registraron antecedentes para esta generación.',
+    '',
+    '### Medicación y suplementos actuales',
+    medicationsText ?? 'Ninguna reportada',
+    '',
+    '### Laboratorio base (panel confirmado)',
+    `Fecha de toma: ${labSnapshot.collectedAt ?? 'No indicada'}`,
+    `Laboratorio: ${labSnapshot.labName ?? 'No indicado'}`,
+    `Panel: ${labSnapshot.panelName ?? 'No indicado'}`,
+    'Analitos:',
+    JSON.stringify(labSnapshot.analytes, null, 2),
+    '',
+    '---',
+    '',
+    instructions.trim(),
+  ];
+
+  return sections.join('\n');
 }
 
 function generationErrorMessage(error: unknown) {

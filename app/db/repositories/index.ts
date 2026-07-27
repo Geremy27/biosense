@@ -3,6 +3,7 @@ export * from './clinical-recommendations.repository';
 export * from './lab-analytes.repository';
 export * from './lab-reports.repository';
 export * from './organizations.repository';
+export * from './patient-medical-histories.repository';
 export * from './patients.repository';
 export * from './providers.repository';
 export * from './recommendation-prompts.repository';

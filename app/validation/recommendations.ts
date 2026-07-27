@@ -12,6 +12,29 @@ export const findingDomainValues = [
 
 export const findingSeverityValues = ['normal', 'atencion', 'alto', 'incierto'] as const;
 
+const conclusionItemSchema = z.object({
+  statement: z.string(),
+  rationale: z.string(),
+});
+
+const recommendationItemSchema = z.object({
+  action: z.string(),
+  rationale: z.string(),
+});
+
+const lifestyleItemSchema = z.object({
+  guidance: z.string(),
+  rationale: z.string(),
+});
+
+function asLifestyleItem(value: unknown) {
+  if (typeof value === 'string') {
+    return { guidance: value, rationale: '' };
+  }
+
+  return value;
+}
+
 export const recommendationOutputSchema = z.object({
   patientContextEcho: z.object({
     ageYears: z.number(),
@@ -36,12 +59,12 @@ export const recommendationOutputSchema = z.object({
     }),
   ),
   medicationConsiderationNote: z.string(),
-  conclusions: z.array(z.string()).max(3),
-  recommendations: z.array(z.string()),
+  conclusions: z.array(conclusionItemSchema).max(3),
+  recommendations: z.array(recommendationItemSchema),
   lifestyle: z.object({
-    nutrition: z.string(),
-    exercise: z.string(),
-    mentalAndSleep: z.string(),
+    nutrition: lifestyleItemSchema,
+    exercise: lifestyleItemSchema,
+    mentalAndSleep: lifestyleItemSchema,
   }),
   possibleSupplements: z
     .array(
@@ -59,15 +82,66 @@ export const recommendationOutputSchema = z.object({
 
 export type RecommendationOutput = z.infer<typeof recommendationOutputSchema>;
 
+/** Accepts current schema or legacy string conclusions/recommendations/lifestyle. */
 export function asRecommendationOutput(value: unknown): RecommendationOutput | null {
   const result = recommendationOutputSchema.safeParse(value);
-  return result.success ? result.data : null;
+  if (result.success) {
+    return result.data;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const legacy = value as {
+    conclusions?: unknown;
+    recommendations?: unknown;
+    lifestyle?: {
+      nutrition?: unknown;
+      exercise?: unknown;
+      mentalAndSleep?: unknown;
+    };
+  };
+
+  const normalized = {
+    ...value,
+    conclusions: Array.isArray(legacy.conclusions)
+      ? legacy.conclusions.map((item) =>
+          typeof item === 'string'
+            ? { statement: item, rationale: '' }
+            : item,
+        )
+      : [],
+    recommendations: Array.isArray(legacy.recommendations)
+      ? legacy.recommendations.map((item) =>
+          typeof item === 'string'
+            ? { action: item, rationale: '' }
+            : item,
+        )
+      : [],
+    lifestyle: legacy.lifestyle
+      ? {
+          nutrition: asLifestyleItem(legacy.lifestyle.nutrition),
+          exercise: asLifestyleItem(legacy.lifestyle.exercise),
+          mentalAndSleep: asLifestyleItem(legacy.lifestyle.mentalAndSleep),
+        }
+      : undefined,
+  };
+
+  const retry = recommendationOutputSchema.safeParse(normalized);
+  return retry.success ? retry.data : null;
 }
 
 export const generateRecommendationInputSchema = z.object({
   labReportId: z.string().uuid({ message: 'Selecciona un laboratorio confirmado.' }),
+  medicalHistoryId: z
+    .string()
+    .trim()
+    .transform((value) => (value === '' ? null : value))
+    .nullable()
+    .pipe(z.string().uuid({ message: 'Selecciona antecedentes válidos.' }).nullable()),
   systemPrompt: z.string().trim().min(1, 'El system prompt es obligatorio.'),
-  userPromptTemplate: z.string().trim().min(1, 'El user prompt es obligatorio.'),
+  instructions: z.string().trim().min(1, 'Las instrucciones son obligatorias.'),
   model: z
     .string()
     .trim()
@@ -85,8 +159,9 @@ export type GenerateRecommendationInput = z.infer<typeof generateRecommendationI
 export function parseGenerateRecommendationFormData(formData: FormData) {
   return generateRecommendationInputSchema.safeParse({
     labReportId: String(formData.get('labReportId') ?? ''),
+    medicalHistoryId: String(formData.get('medicalHistoryId') ?? ''),
     systemPrompt: String(formData.get('systemPrompt') ?? ''),
-    userPromptTemplate: String(formData.get('userPromptTemplate') ?? ''),
+    instructions: String(formData.get('instructions') ?? ''),
     model: String(formData.get('model') ?? ''),
     medicationsText: String(formData.get('medicationsText') ?? ''),
   });
@@ -95,7 +170,7 @@ export function parseGenerateRecommendationFormData(formData: FormData) {
 export const recommendationPromptInputSchema = z.object({
   name: z.string().trim().min(1, 'El nombre es obligatorio.'),
   systemPrompt: z.string().trim().min(1, 'El system prompt es obligatorio.'),
-  userPromptTemplate: z.string().trim().min(1, 'El user prompt es obligatorio.'),
+  userPromptTemplate: z.string().trim().min(1, 'Las instrucciones son obligatorias.'),
   model: z.string().trim().min(1, 'El modelo es obligatorio.'),
   isActive: z
     .string()

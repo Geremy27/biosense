@@ -4,6 +4,7 @@ export * from './clinical-recommendations.service';
 export * from './context';
 export * from './lab-reports.service';
 export * from './organizations.service';
+export * from './patient-medical-histories.service';
 export * from './patients.service';
 export * from './providers.service';
 export * from './recommendation-prompts.service';

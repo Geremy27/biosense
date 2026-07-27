@@ -6,6 +6,7 @@ import { clinicalRecommendations } from './models/clinical-recommendations';
 import { labAnalytes } from './models/lab-analytes';
 import { labReports } from './models/lab-reports';
 import { organizations } from './models/organizations';
+import { patientMedicalHistories } from './models/patient-medical-histories';
 import { patients } from './models/patients';
 import { providers } from './models/providers';
 import { recommendationPrompts } from './models/recommendation-prompts';
@@ -45,6 +46,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   patients: many(patients),
   labReports: many(labReports),
   clinicalRecommendations: many(clinicalRecommendations),
+  patientMedicalHistories: many(patientMedicalHistories),
 }));
 
 export const providersRelations = relations(providers, ({ one, many }) => ({
@@ -73,6 +75,22 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   labReports: many(labReports),
   labAnalytes: many(labAnalytes),
   clinicalRecommendations: many(clinicalRecommendations),
+  medicalHistories: many(patientMedicalHistories),
+}));
+
+export const patientMedicalHistoriesRelations = relations(patientMedicalHistories, ({ one }) => ({
+  patient: one(patients, {
+    fields: [patientMedicalHistories.patientId],
+    references: [patients.id],
+  }),
+  organization: one(organizations, {
+    fields: [patientMedicalHistories.organizationId],
+    references: [organizations.id],
+  }),
+  createdByUser: one(users, {
+    fields: [patientMedicalHistories.createdByUserId],
+    references: [users.id],
+  }),
 }));
 
 export const labReportsRelations = relations(labReports, ({ one, many }) => ({

@@ -14,15 +14,21 @@ export default function PatientView() {
       <PatientSummary patient={patient} />
 
       <PatientSection
-        title="Consultas anteriores"
-        description="Historial de consultas y casos clínicos del paciente."
+        title="Antecedentes"
+        description="Historia clínica estructurada del paciente."
         icon={ClipboardList}
       >
-        <div className="rounded-lg bg-slate-100 px-4 py-8 text-center">
-          <p className="text-sm font-semibold text-slate-500">Próximamente</p>
-          <p className="mt-1 text-sm text-slate-400">
-            Aquí podrás ver consultas previas, diagnósticos y notas clínicas.
+        <div className="rounded-lg bg-cyan-50 px-4 py-6">
+          <p className="text-sm font-semibold text-cyan-950">Registros clínicos</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Motivo de consulta, antecedentes, alergias, medicación y hábitos.
           </p>
+          <Link
+            to={`/provider/patients/${patient.id}/medical-histories`}
+            className="mt-4 inline-flex font-semibold text-cyan-600 hover:text-cyan-800"
+          >
+            Ver antecedentes →
+          </Link>
         </div>
       </PatientSection>
 
@@ -53,8 +59,8 @@ export default function PatientView() {
         <div className="rounded-lg bg-cyan-50 px-4 py-6">
           <p className="text-sm font-semibold text-cyan-950">Medicina funcional</p>
           <p className="mt-1 text-sm text-slate-500">
-            Genera recomendaciones a partir de un laboratorio confirmado. Puedes editar el prompt
-            en cada generación.
+            Genera recomendaciones a partir de laboratorio confirmado y antecedentes. El porqué de
+            cada conclusión queda visible para el médico.
           </p>
           <Link
             to={`/provider/patients/${patient.id}/recommendations`}

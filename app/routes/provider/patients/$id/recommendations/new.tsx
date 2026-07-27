@@ -11,11 +11,13 @@ import {
   generateClinicalRecommendation,
   validateGenerateRecommendationFormData,
 } from '~/services/clinical-recommendations.service';
+import { listMedicalHistories } from '~/services/patient-medical-histories.service';
 import { listLabReports } from '~/services/lab-reports.service';
 import {
+  DEFAULT_RECOMMENDATION_INSTRUCTIONS,
   DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-  DEFAULT_RECOMMENDATION_USER_PROMPT_TEMPLATE,
 } from '~/services/recommendation-prompt-defaults';
+import { formatMedicalHistoryDate } from '~/utils/medical-history-display';
 import { formatLabDate } from '~/utils/lab-display';
 import { buildActorContext } from '~/utils/session.server';
 
@@ -24,12 +26,16 @@ import type { Route } from './+types/new';
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const ctx = await buildActorContext(request);
-  const reports = await listLabReports(ctx, params.id);
+  const [reports, medicalHistories] = await Promise.all([
+    listLabReports(ctx, params.id),
+    listMedicalHistories(ctx, params.id),
+  ]);
 
   return {
     confirmedLabs: reports.filter((report) => report.status === LabReportStatus.CONFIRMED),
+    medicalHistories,
     defaultSystemPrompt: DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-    defaultUserPromptTemplate: DEFAULT_RECOMMENDATION_USER_PROMPT_TEMPLATE,
+    defaultInstructions: DEFAULT_RECOMMENDATION_INSTRUCTIONS,
     defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o',
   };
 }
@@ -71,8 +77,8 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
         </Link>
         <h2 className="mt-2 text-2xl font-bold text-cyan-950">Generar recomendación</h2>
         <p className="mt-2 text-sm text-slate-500">
-          Edita el prompt libremente para experimentar. El texto usado queda guardado en la
-          recomendación.
+          Los datos clínicos (paciente, antecedentes y laboratorio) se envían automáticamente.
+          Aquí solo editas las instrucciones para el modelo.
         </p>
       </div>
 
@@ -109,17 +115,34 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
               <FieldError message={actionData?.errors?.labReportId} />
             </FormField>
 
-            <FormField id="medicationsText" label="Medicación y suplementos actuales">
+            <FormField id="medicalHistoryId" label="Antecedentes clínicos">
+              <select
+                id="medicalHistoryId"
+                name="medicalHistoryId"
+                className="input"
+                defaultValue={loaderData.medicalHistories[0]?.id ?? ''}
+              >
+                <option value="">Sin antecedentes (opcional)</option>
+                {loaderData.medicalHistories.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.title} — {formatMedicalHistoryDate(row.recordedAt)}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                Se incluyen en el contexto del modelo. Puedes crearlos en la pestaña Antecedentes.
+              </p>
+              <FieldError message={actionData?.errors?.medicalHistoryId} />
+            </FormField>
+
+            <FormField id="medicationsText" label="Medicación y suplementos (opcional)">
               <textarea
                 id="medicationsText"
                 name="medicationsText"
-                rows={4}
+                rows={3}
                 className="input"
-                placeholder="Ej: Magnesio 200 mg noche; Vitamina D 2000 UI diaria; Losartán 50 mg"
+                placeholder="Si lo dejas vacío, se usa la medicación de los antecedentes seleccionados."
               />
-              <p className="mt-2 text-xs text-slate-500">
-                Texto libre por ahora. Se inyecta en el prompt como {'{{medications_json}}'}.
-              </p>
               <FieldError message={actionData?.errors?.medicationsText} />
             </FormField>
 
@@ -145,27 +168,27 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
               <FieldError message={actionData?.errors?.systemPrompt} />
             </FormField>
 
-            <FormField id="userPromptTemplate" label="User prompt">
+            <FormField id="instructions" label="Instrucciones">
               <textarea
-                id="userPromptTemplate"
-                name="userPromptTemplate"
-                rows={16}
+                id="instructions"
+                name="instructions"
+                rows={18}
                 className="input font-mono text-sm"
                 required
-                defaultValue={loaderData.defaultUserPromptTemplate}
+                defaultValue={loaderData.defaultInstructions}
               />
               <p className="mt-2 text-xs text-slate-500">
-                Placeholders: {'{{patient_json}}'}, {'{{medications_json}}'}, {'{{collected_at}}'},{' '}
-                {'{{analytes_json}}'}.
+                Solo instrucciones clínicas. Demografía, antecedentes, medicación y analitos se
+                agregan automáticamente en código.
               </p>
-              <FieldError message={actionData?.errors?.userPromptTemplate} />
+              <FieldError message={actionData?.errors?.instructions} />
             </FormField>
 
             <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-4">
               <Lightbulb className="mt-0.5 size-5 shrink-0 text-cyan-600" aria-hidden />
               <p className="text-sm leading-relaxed text-slate-600">
-                No se envían nombre, documento ni datos de contacto. Solo edad, sexo, medidas y
-                valores del laboratorio seleccionado.
+                No se envían nombre, documento ni datos de contacto. Solo edad, sexo, medidas,
+                antecedentes seleccionados y valores del laboratorio.
               </p>
             </div>
 

@@ -74,9 +74,9 @@ export default function EditRecommendationPrompt({
       <Form method="post" className="mt-8 card space-y-6">
         <FormPendingFieldset className="space-y-6">
           <p className="text-sm text-slate-500">
-            Slug: <span className="font-semibold text-cyan-950">{prompt.slug}</span>. Placeholders
-            disponibles: {'{{patient_json}}'}, {'{{medications_json}}'}, {'{{collected_at}}'},{' '}
-            {'{{analytes_json}}'}.
+            Slug: <span className="font-semibold text-cyan-950">{prompt.slug}</span>. Este texto son
+            solo las instrucciones clínicas; demografía, antecedentes y laboratorio se inyectan
+            automáticamente al generar.
           </p>
 
           <FormField id="name" label="Nombre">
@@ -112,7 +112,7 @@ export default function EditRecommendationPrompt({
             <FieldError message={actionData?.errors?.systemPrompt} />
           </FormField>
 
-          <FormField id="userPromptTemplate" label="User prompt template">
+          <FormField id="userPromptTemplate" label="Instrucciones">
             <textarea
               id="userPromptTemplate"
               name="userPromptTemplate"

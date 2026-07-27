@@ -31,6 +31,7 @@ export const clinicalRecommendations = pgTable(
       .default(ClinicalRecommendationStatus.GENERATING),
     inputPatientSnapshot: jsonb('input_patient_snapshot').notNull(),
     inputLabSnapshot: jsonb('input_lab_snapshot').notNull(),
+    inputMedicalHistorySnapshot: jsonb('input_medical_history_snapshot'),
     inputMedicationsSnapshot: text('input_medications_snapshot'),
     output: jsonb('output'),
     generationError: text('generation_error'),

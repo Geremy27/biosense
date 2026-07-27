@@ -7,9 +7,9 @@ import {
   updateRecommendationPrompt,
 } from '~/db/repositories';
 import {
+  DEFAULT_RECOMMENDATION_INSTRUCTIONS,
   DEFAULT_RECOMMENDATION_PROMPT_SLUG,
   DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-  DEFAULT_RECOMMENDATION_USER_PROMPT_TEMPLATE,
 } from '~/services/recommendation-prompt-defaults';
 import {
   parseRecommendationPromptFormData,
@@ -115,10 +115,10 @@ export async function ensureDefaultRecommendationPrompt(createdByUserId?: string
 
   return insertRecommendationPrompt({
     slug: DEFAULT_RECOMMENDATION_PROMPT_SLUG,
-    name: 'Medicina funcional y longevidad v1',
+    name: 'Medicina funcional y longevidad v2',
     systemPrompt: DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-    userPromptTemplate: DEFAULT_RECOMMENDATION_USER_PROMPT_TEMPLATE,
-    outputSchemaVersion: 1,
+    userPromptTemplate: DEFAULT_RECOMMENDATION_INSTRUCTIONS,
+    outputSchemaVersion: 2,
     model: process.env.OPENAI_MODEL ?? 'gpt-4o',
     isActive: true,
     createdByUserId: createdByUserId ?? null,

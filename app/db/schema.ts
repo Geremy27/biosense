@@ -5,6 +5,7 @@ export * from './models/enums';
 export * from './models/lab-analytes';
 export * from './models/lab-reports';
 export * from './models/organizations';
+export * from './models/patient-medical-histories';
 export * from './models/patients';
 export * from './models/providers';
 export * from './models/recommendation-prompts';

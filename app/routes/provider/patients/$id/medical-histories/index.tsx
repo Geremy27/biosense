@@ -1,11 +1,15 @@
-import { ClipboardPlus, NotebookPen } from 'lucide-react';
+import { ClipboardPlus, NotebookPen, Upload } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router';
 
 import { EmptyState } from '~/components/ui/empty-state';
+import { StatusBadge } from '~/components/ui/status-badge';
+import { MedicalHistoryStatus } from '~/db/models/enums';
 import { listMedicalHistories } from '~/services/patient-medical-histories.service';
 import {
   formatMedicalHistoryCreatedAt,
   formatMedicalHistoryDate,
+  formatMedicalHistoryStatus,
+  medicalHistoryStatusBadgeVariant,
 } from '~/utils/medical-history-display';
 import { buildActorContext } from '~/utils/session.server';
 
@@ -25,15 +29,21 @@ export default function PatientMedicalHistories({ loaderData }: Route.ComponentP
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="eyebrow">Historia clínica</p>
-          <h2 className="mt-1 text-2xl font-bold text-cyan-950">Antecedentes</h2>
+          <h2 className="mt-1 text-2xl font-bold text-cyan-950">Historial</h2>
           <p className="mt-2 text-sm text-slate-500">
             Historia clínica estructurada para contextualizar laboratorios y recomendaciones.
           </p>
         </div>
-        <Link to="new" className="btn-primary gap-2">
-          <ClipboardPlus className="size-4" aria-hidden />
-          Nuevo registro
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="new-from-pdf" className="btn-ghost gap-2">
+            <Upload className="size-4" aria-hidden />
+            Subir PDF
+          </Link>
+          <Link to="new" className="btn-primary gap-2">
+            <ClipboardPlus className="size-4" aria-hidden />
+            Nuevo registro
+          </Link>
+        </div>
       </div>
 
       {loaderData.medicalHistories.length === 0 ? (
@@ -55,32 +65,44 @@ export default function PatientMedicalHistories({ loaderData }: Route.ComponentP
                 <th className="data-table-th">Registro</th>
                 <th className="data-table-th">Fecha clínica</th>
                 <th className="data-table-th">Creado</th>
+                <th className="data-table-th">Estado</th>
                 <th className="data-table-th text-right">Acción</th>
               </tr>
             </thead>
             <tbody>
-              {loaderData.medicalHistories.map((row) => (
-                <tr key={row.id} className="data-table-row">
-                  <td className="data-table-td">
-                    <p className="font-semibold text-cyan-950">{row.title}</p>
-                    {row.chiefComplaint ? (
-                      <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-                        {row.chiefComplaint}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="data-table-td">{formatMedicalHistoryDate(row.recordedAt)}</td>
-                  <td className="data-table-td">{formatMedicalHistoryCreatedAt(row.createdAt)}</td>
-                  <td className="data-table-td text-right">
-                    <Link
-                      to={`/provider/patients/${patient.id}/medical-histories/${row.id}`}
-                      className="font-semibold text-cyan-600 hover:text-cyan-800"
-                    >
-                      Ver / Editar
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+              {loaderData.medicalHistories.map((row) => {
+                const isConfirmed = row.status === MedicalHistoryStatus.CONFIRMED;
+                const isDraft = row.status === MedicalHistoryStatus.DRAFT;
+
+                return (
+                  <tr key={row.id} className="data-table-row">
+                    <td className="data-table-td">
+                      <p className="font-semibold text-cyan-950">{row.title}</p>
+                      {row.chiefComplaint ? (
+                        <p className="mt-1 line-clamp-1 text-xs text-slate-500">
+                          {row.chiefComplaint}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="data-table-td">{formatMedicalHistoryDate(row.recordedAt)}</td>
+                    <td className="data-table-td">{formatMedicalHistoryCreatedAt(row.createdAt)}</td>
+                    <td className="data-table-td">
+                      <StatusBadge
+                        label={formatMedicalHistoryStatus(row.status)}
+                        variant={medicalHistoryStatusBadgeVariant(row.status)}
+                      />
+                    </td>
+                    <td className="data-table-td text-right">
+                      <Link
+                        to={`/provider/patients/${patient.id}/medical-histories/${row.id}`}
+                        className="font-semibold text-cyan-600 hover:text-cyan-800"
+                      >
+                        {isConfirmed ? 'Ver' : isDraft ? 'Ver / Editar' : 'Ver detalle'}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

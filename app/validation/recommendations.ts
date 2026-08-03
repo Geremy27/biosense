@@ -22,24 +22,49 @@ const recommendationItemSchema = z.object({
   rationale: z.string(),
 });
 
+const lifestyleKeyNumberSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
 const lifestyleItemSchema = z.object({
+  // Detailed, actionable plan. Shown to both patient and provider.
   guidance: z.string(),
+  // Deep, dense scientific rationale. Provider-only, revealed on click, never printed for the patient.
   rationale: z.string(),
+  // Clear, simple "why this matters" in plain language, for the patient. Shown directly in print/PDF.
+  patientSummary: z.string().default(''),
+  // Quick at-a-glance facts, e.g. { label: "Proteína", value: "120 g/día" }. Max 4, shown on the collapsed card.
+  keyNumbers: z.array(lifestyleKeyNumberSchema).max(4).default([]),
 });
 
 function asLifestyleItem(value: unknown) {
   if (typeof value === 'string') {
-    return { guidance: value, rationale: '' };
+    return { guidance: value, rationale: '', patientSummary: '', keyNumbers: [] };
   }
 
   return value;
 }
+
+export const shareableSectionValues = [
+  'context',
+  'executiveSummary',
+  'conclusions',
+  'recommendations',
+  'lifestyle',
+  'supplements',
+] as const;
+
+export type ShareableSection = (typeof shareableSectionValues)[number];
 
 export const recommendationOutputSchema = z.object({
   patientContextEcho: z.object({
     ageYears: z.number(),
     sex: z.string().nullable(),
   }),
+  // Short bullets so a provider with many patients can skim before reading
+  // the full report. Provider-only, never shared with the patient.
+  executiveSummary: z.array(z.string()).max(4).default([]),
   findings: z.array(
     z.object({
       domain: z.enum(findingDomainValues),
@@ -165,6 +190,64 @@ export function parseGenerateRecommendationFormData(formData: FormData) {
     model: String(formData.get('model') ?? ''),
     medicationsText: String(formData.get('medicationsText') ?? ''),
   });
+}
+
+export const recommendationEditInputSchema = z.object({
+  executiveSummary: z.array(z.string().trim().min(1)).max(4),
+  conclusions: z.array(conclusionItemSchema).max(3),
+  recommendations: z.array(recommendationItemSchema),
+  lifestyle: z.object({
+    nutrition: lifestyleItemSchema,
+    exercise: lifestyleItemSchema,
+    mentalAndSleep: lifestyleItemSchema,
+  }),
+  possibleSupplements: z
+    .array(
+      z.object({
+        name: z.string(),
+        dose: z.string().nullable(),
+        rationale: z.string(),
+        requiresMoreLabs: z.boolean(),
+        missingLabs: z.string().nullable(),
+      }),
+    )
+    .max(3),
+});
+
+export type RecommendationEditInput = z.infer<typeof recommendationEditInputSchema>;
+
+function parseLifestyleEditField(formData: FormData, prefix: string) {
+  return {
+    guidance: String(formData.get(`${prefix}Guidance`) ?? ''),
+    rationale: String(formData.get(`${prefix}Rationale`) ?? ''),
+    patientSummary: String(formData.get(`${prefix}PatientSummary`) ?? ''),
+    keyNumbers: JSON.parse(String(formData.get(`${prefix}KeyNumbersJson`) ?? '[]')),
+  };
+}
+
+export function parseRecommendationEditFormData(formData: FormData) {
+  try {
+    return recommendationEditInputSchema.safeParse({
+      executiveSummary: JSON.parse(String(formData.get('executiveSummaryJson') ?? '[]')),
+      conclusions: JSON.parse(String(formData.get('conclusionsJson') ?? '[]')),
+      recommendations: JSON.parse(String(formData.get('recommendationsJson') ?? '[]')),
+      possibleSupplements: JSON.parse(String(formData.get('possibleSupplementsJson') ?? '[]')),
+      lifestyle: {
+        nutrition: parseLifestyleEditField(formData, 'lifestyleNutrition'),
+        exercise: parseLifestyleEditField(formData, 'lifestyleExercise'),
+        mentalAndSleep: parseLifestyleEditField(formData, 'lifestyleMentalAndSleep'),
+      },
+    });
+  } catch {
+    return recommendationEditInputSchema.safeParse(null);
+  }
+}
+
+export function parseShareSectionsFormData(formData: FormData) {
+  const selected = formData.getAll('sections').map((value) => String(value));
+  return selected.filter((value): value is ShareableSection =>
+    (shareableSectionValues as readonly string[]).includes(value),
+  );
 }
 
 export const recommendationPromptInputSchema = z.object({

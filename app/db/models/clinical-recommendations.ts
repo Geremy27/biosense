@@ -34,6 +34,9 @@ export const clinicalRecommendations = pgTable(
     inputMedicalHistorySnapshot: jsonb('input_medical_history_snapshot'),
     inputMedicationsSnapshot: text('input_medications_snapshot'),
     output: jsonb('output'),
+    // Which sections the provider chose to include in the patient-facing
+    // printable/PDF export. Null until the provider opens the share screen.
+    shareSections: jsonb('share_sections'),
     generationError: text('generation_error'),
     generatedAt: timestamp('generated_at', { withTimezone: true, mode: 'string' }),
     confirmedAt: timestamp('confirmed_at', { withTimezone: true, mode: 'string' }),

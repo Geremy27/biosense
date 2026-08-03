@@ -39,9 +39,9 @@ export default function NewMedicalHistory() {
           to={`/provider/patients/${patient.id}/medical-histories`}
           className="text-sm font-semibold text-cyan-600 hover:text-cyan-800"
         >
-          ← Antecedentes
+          ← Historial
         </Link>
-        <h2 className="mt-2 text-2xl font-bold text-cyan-950">Nuevo registro de antecedentes</h2>
+        <h2 className="mt-2 text-2xl font-bold text-cyan-950">Nuevo registro de historial</h2>
         <p className="mt-2 text-sm text-slate-500">
           Captura historia clínica, hábitos y medicación para usarla en recomendaciones.
         </p>
@@ -52,6 +52,7 @@ export default function NewMedicalHistory() {
           submitLabel="Guardar antecedentes"
           cancelTo={`/provider/patients/${patient.id}/medical-histories`}
           errors={actionData?.errors}
+          patientSex={patient.sex}
         />
       </Form>
     </div>

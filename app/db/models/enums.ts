@@ -99,6 +99,20 @@ export const labReportStatus = pgEnum('lab_report_status', [
   LabReportStatus.FAILED,
 ]);
 
+export enum MedicalHistoryStatus {
+  EXTRACTING = 'extracting',
+  DRAFT = 'draft',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed',
+}
+
+export const medicalHistoryStatus = pgEnum('medical_history_status', [
+  MedicalHistoryStatus.EXTRACTING,
+  MedicalHistoryStatus.DRAFT,
+  MedicalHistoryStatus.CONFIRMED,
+  MedicalHistoryStatus.FAILED,
+]);
+
 export enum ClinicalRecommendationStatus {
   GENERATING = 'generating',
   PENDING_REVIEW = 'pending_review',

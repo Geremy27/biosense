@@ -14,7 +14,7 @@ export default function PatientView() {
       <PatientSummary patient={patient} />
 
       <PatientSection
-        title="Antecedentes"
+        title="Historial"
         description="Historia clínica estructurada del paciente."
         icon={ClipboardList}
       >
@@ -27,7 +27,7 @@ export default function PatientView() {
             to={`/provider/patients/${patient.id}/medical-histories`}
             className="mt-4 inline-flex font-semibold text-cyan-600 hover:text-cyan-800"
           >
-            Ver antecedentes →
+            Ver historial →
           </Link>
         </div>
       </PatientSection>

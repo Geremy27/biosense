@@ -31,6 +31,10 @@ export default [
         route('medical-histories', 'routes/provider/patients/$id/medical-histories/index.tsx'),
         route('medical-histories/new', 'routes/provider/patients/$id/medical-histories/new.tsx'),
         route(
+          'medical-histories/new-from-pdf',
+          'routes/provider/patients/$id/medical-histories/new-from-pdf.tsx',
+        ),
+        route(
           'medical-histories/:historyId',
           'routes/provider/patients/$id/medical-histories/$historyId.tsx',
         ),
@@ -42,6 +46,10 @@ export default [
         route(
           'recommendations/:recommendationId',
           'routes/provider/patients/$id/recommendations/$recommendationId.tsx',
+        ),
+        route(
+          'recommendations/:recommendationId/share',
+          'routes/provider/patients/$id/recommendations/$recommendationId.share.tsx',
         ),
       ]),
     ]),

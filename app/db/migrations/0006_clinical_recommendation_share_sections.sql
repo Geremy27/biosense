@@ -1,0 +1,1 @@
+ALTER TABLE "clinical_recommendations" ADD COLUMN "share_sections" jsonb;

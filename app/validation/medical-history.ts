@@ -13,28 +13,68 @@ export const medicalHistoryInputSchema = z.object({
     .trim()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Indica una fecha válida (AAAA-MM-DD).'),
   chiefComplaint: optionalText,
-  personalHistory: optionalText,
-  familyHistory: optionalText,
+  personalHistory1: optionalText,
+  personalHistory2: optionalText,
   surgicalHistory: optionalText,
+  medications: optionalText,
+  supplements: optionalText,
+  infectiousHistory: optionalText,
+  traumaticHistory: optionalText,
+  toxicologicalHistory: optionalText,
   allergies: optionalText,
-  medicationsAndSupplements: optionalText,
-  habitsLifestyle: optionalText,
+  vaccines: optionalText,
+  habits: optionalText,
+  gynecoObstetricHistory: optionalText,
+  familyHistory: optionalText,
+  psychosocialHistory: optionalText,
   notes: optionalText,
 });
 
 export type MedicalHistoryInput = z.infer<typeof medicalHistoryInputSchema>;
 
+const MEDICAL_HISTORY_FIELDS = [
+  'title',
+  'recordedAt',
+  'chiefComplaint',
+  'personalHistory1',
+  'personalHistory2',
+  'surgicalHistory',
+  'medications',
+  'supplements',
+  'infectiousHistory',
+  'traumaticHistory',
+  'toxicologicalHistory',
+  'allergies',
+  'vaccines',
+  'habits',
+  'gynecoObstetricHistory',
+  'familyHistory',
+  'psychosocialHistory',
+  'notes',
+] as const;
+
 export function parseMedicalHistoryFormData(formData: FormData) {
-  return medicalHistoryInputSchema.safeParse({
-    title: String(formData.get('title') ?? ''),
-    recordedAt: String(formData.get('recordedAt') ?? ''),
-    chiefComplaint: String(formData.get('chiefComplaint') ?? ''),
-    personalHistory: String(formData.get('personalHistory') ?? ''),
-    familyHistory: String(formData.get('familyHistory') ?? ''),
-    surgicalHistory: String(formData.get('surgicalHistory') ?? ''),
-    allergies: String(formData.get('allergies') ?? ''),
-    medicationsAndSupplements: String(formData.get('medicationsAndSupplements') ?? ''),
-    habitsLifestyle: String(formData.get('habitsLifestyle') ?? ''),
-    notes: String(formData.get('notes') ?? ''),
+  const raw = Object.fromEntries(
+    MEDICAL_HISTORY_FIELDS.map((field) => [field, String(formData.get(field) ?? '')]),
+  );
+
+  return medicalHistoryInputSchema.safeParse(raw);
+}
+
+export const confirmMedicalHistoryInputSchema = z.object({
+  acknowledged: z
+    .string()
+    .optional()
+    .transform((value) => value === 'on' || value === 'true')
+    .refine((value) => value === true, {
+      message: 'Debes confirmar que entiendes que este antecedente quedará bloqueado.',
+    }),
+});
+
+export type ConfirmMedicalHistoryInput = z.infer<typeof confirmMedicalHistoryInputSchema>;
+
+export function parseConfirmMedicalHistoryFormData(formData: FormData) {
+  return confirmMedicalHistoryInputSchema.safeParse({
+    acknowledged: String(formData.get('acknowledged') ?? ''),
   });
 }

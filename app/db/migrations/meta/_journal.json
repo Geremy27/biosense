@@ -29,6 +29,27 @@
       "when": 1785178034130,
       "tag": "0003_strange_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785718176055,
+      "tag": "0004_medical_history_structured_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785718486352,
+      "tag": "0005_medical_history_pdf_extraction",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785720849903,
+      "tag": "0006_clinical_recommendation_share_sections",
+      "breakpoints": true
     }
   ]
 }

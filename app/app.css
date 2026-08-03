@@ -141,3 +141,14 @@ body {
     @apply absolute -top-32 right-0 size-80 rounded-full bg-cyan-200 opacity-25 blur-3xl;
   }
 }
+
+/* Toggled on the printable container only while it's being captured for a
+   downloaded PDF, so the wide desktop layout reflows into something legible
+   on a narrower page instead of squeezing three columns down to fit. */
+.pdf-export [data-pdf-lifestyle-grid] {
+  display: block;
+}
+
+.pdf-export [data-pdf-lifestyle-grid] > * + * {
+  margin-top: 1rem;
+}

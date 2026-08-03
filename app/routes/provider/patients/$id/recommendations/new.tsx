@@ -5,7 +5,7 @@ import { FieldError } from '~/components/forms/field-error';
 import { FormField } from '~/components/forms/form-field';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { SubmitButton } from '~/components/forms/submit-button';
-import { LabReportStatus } from '~/db/models/enums';
+import { LabReportStatus, MedicalHistoryStatus } from '~/db/models/enums';
 import {
   ClinicalRecommendationValidationError,
   generateClinicalRecommendation,
@@ -33,7 +33,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   return {
     confirmedLabs: reports.filter((report) => report.status === LabReportStatus.CONFIRMED),
-    medicalHistories,
+    medicalHistories: medicalHistories.filter(
+      (row) =>
+        row.status === MedicalHistoryStatus.DRAFT ||
+        row.status === MedicalHistoryStatus.CONFIRMED,
+    ),
     defaultSystemPrompt: DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
     defaultInstructions: DEFAULT_RECOMMENDATION_INSTRUCTIONS,
     defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o',
@@ -130,7 +134,7 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
                 ))}
               </select>
               <p className="mt-2 text-xs text-slate-500">
-                Se incluyen en el contexto del modelo. Puedes crearlos en la pestaña Antecedentes.
+                Se incluyen en el contexto del modelo. Puedes crearlos en la pestaña Historial.
               </p>
               <FieldError message={actionData?.errors?.medicalHistoryId} />
             </FormField>

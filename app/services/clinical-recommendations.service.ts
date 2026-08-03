@@ -8,12 +8,19 @@ import {
   findMedicalHistoryByPatientAndId,
   findPatientById,
   insertClinicalRecommendation,
+  unlockClinicalRecommendationRow,
   updateClinicalRecommendation,
+  updateClinicalRecommendationOutput,
+  updateClinicalRecommendationShareSections,
 } from '~/db/repositories';
 import { formatSex } from '~/utils/patient-display';
 import {
+  asRecommendationOutput,
   parseGenerateRecommendationFormData,
+  parseRecommendationEditFormData,
+  parseShareSectionsFormData,
   type GenerateRecommendationInput,
+  type RecommendationEditInput,
 } from '~/validation/recommendations';
 import { zodFieldErrors } from '~/validation/zod-errors';
 
@@ -59,12 +66,20 @@ export type MedicalHistorySnapshot = {
   title: string;
   recordedAt: string;
   chiefComplaint: string | null;
-  personalHistory: string | null;
-  familyHistory: string | null;
+  personalHistory1: string | null;
+  personalHistory2: string | null;
   surgicalHistory: string | null;
+  medications: string | null;
+  supplements: string | null;
+  infectiousHistory: string | null;
+  traumaticHistory: string | null;
+  toxicologicalHistory: string | null;
   allergies: string | null;
-  medicationsAndSupplements: string | null;
-  habitsLifestyle: string | null;
+  vaccines: string | null;
+  habits: string | null;
+  gynecoObstetricHistory: string | null;
+  familyHistory: string | null;
+  psychosocialHistory: string | null;
   notes: string | null;
 };
 
@@ -145,12 +160,20 @@ export async function generateClinicalRecommendation(
       title: medicalHistory.title,
       recordedAt: medicalHistory.recordedAt,
       chiefComplaint: medicalHistory.chiefComplaint,
-      personalHistory: medicalHistory.personalHistory,
-      familyHistory: medicalHistory.familyHistory,
+      personalHistory1: medicalHistory.personalHistory1,
+      personalHistory2: medicalHistory.personalHistory2,
       surgicalHistory: medicalHistory.surgicalHistory,
+      medications: medicalHistory.medications,
+      supplements: medicalHistory.supplements,
+      infectiousHistory: medicalHistory.infectiousHistory,
+      traumaticHistory: medicalHistory.traumaticHistory,
+      toxicologicalHistory: medicalHistory.toxicologicalHistory,
       allergies: medicalHistory.allergies,
-      medicationsAndSupplements: medicalHistory.medicationsAndSupplements,
-      habitsLifestyle: medicalHistory.habitsLifestyle,
+      vaccines: medicalHistory.vaccines,
+      habits: medicalHistory.habits,
+      gynecoObstetricHistory: medicalHistory.gynecoObstetricHistory,
+      familyHistory: medicalHistory.familyHistory,
+      psychosocialHistory: medicalHistory.psychosocialHistory,
       notes: medicalHistory.notes,
     };
   }
@@ -170,10 +193,11 @@ export async function generateClinicalRecommendation(
     })),
   };
 
-  const medicationsText =
-    input.medicationsText ??
-    medicalHistorySnapshot?.medicationsAndSupplements ??
-    null;
+  const medicationsAndSupplementsText =
+    [medicalHistorySnapshot?.medications, medicalHistorySnapshot?.supplements]
+      .filter((value): value is string => Boolean(value))
+      .join('\n') || null;
+  const medicationsText = input.medicationsText ?? medicationsAndSupplementsText;
 
   const model = input.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o';
   const userPrompt = buildClinicalUserPrompt({
@@ -322,6 +346,139 @@ export async function confirmClinicalRecommendation(
   });
 
   return confirmed;
+}
+
+export async function unlockClinicalRecommendation(
+  ctx: ActorContext,
+  patientId: string,
+  recommendationId: string,
+) {
+  await assertRecommendationPatientAccess(ctx, patientId);
+  const existing = await findClinicalRecommendationByPatientAndId(patientId, recommendationId);
+
+  if (!existing) {
+    return null;
+  }
+
+  if (existing.status !== ClinicalRecommendationStatus.CONFIRMED) {
+    throw new ClinicalRecommendationValidationError({
+      _form: 'Solo puedes editar recomendaciones confirmadas desde este botón.',
+    });
+  }
+
+  const unlocked = await unlockClinicalRecommendationRow(patientId, recommendationId);
+
+  if (!unlocked) {
+    throw new ClinicalRecommendationValidationError({
+      _form: 'No se pudo reabrir la recomendación. Intenta de nuevo.',
+    });
+  }
+
+  await record(ctx, {
+    action: AuditAction.UPDATE,
+    entityType: 'clinical_recommendation',
+    entityId: recommendationId,
+    patientId,
+    metadata: {
+      statusBefore: existing.status,
+      statusAfter: ClinicalRecommendationStatus.PENDING_REVIEW,
+      step: 'unlock',
+    },
+  });
+
+  return unlocked;
+}
+
+export async function updateClinicalRecommendationEdits(
+  ctx: ActorContext,
+  patientId: string,
+  recommendationId: string,
+  edits: RecommendationEditInput,
+) {
+  await assertRecommendationPatientAccess(ctx, patientId);
+  const existing = await findClinicalRecommendationByPatientAndId(patientId, recommendationId);
+
+  if (!existing) {
+    return null;
+  }
+
+  if (existing.status !== ClinicalRecommendationStatus.PENDING_REVIEW) {
+    throw new ClinicalRecommendationValidationError({
+      _form: 'Solo puedes editar recomendaciones pendientes de revisión. Usa "Editar" primero.',
+    });
+  }
+
+  const currentOutput = asRecommendationOutput(existing.output);
+  if (!currentOutput) {
+    throw new ClinicalRecommendationValidationError({
+      _form: 'No se pudo leer el contenido actual de la recomendación.',
+    });
+  }
+
+  const mergedOutput = { ...currentOutput, ...edits };
+  const updated = await updateClinicalRecommendationOutput(
+    patientId,
+    recommendationId,
+    mergedOutput,
+  );
+
+  if (!updated) {
+    throw new ClinicalRecommendationValidationError({
+      _form: 'No se pudieron guardar los cambios. Intenta de nuevo.',
+    });
+  }
+
+  await record(ctx, {
+    action: AuditAction.UPDATE,
+    entityType: 'clinical_recommendation',
+    entityId: recommendationId,
+    patientId,
+    metadata: { step: 'manual_edit' },
+  });
+
+  return updated;
+}
+
+export async function updateClinicalRecommendationShareSectionsById(
+  ctx: ActorContext,
+  patientId: string,
+  recommendationId: string,
+  sections: string[],
+) {
+  await assertRecommendationPatientAccess(ctx, patientId);
+  const updated = await updateClinicalRecommendationShareSections(
+    patientId,
+    recommendationId,
+    sections,
+  );
+
+  if (!updated) {
+    throw new Response('No encontrado', { status: 404 });
+  }
+
+  await record(ctx, {
+    action: AuditAction.UPDATE,
+    entityType: 'clinical_recommendation',
+    entityId: recommendationId,
+    patientId,
+    metadata: { step: 'share_sections', sections },
+  });
+
+  return updated;
+}
+
+export function validateRecommendationEditFormData(formData: FormData) {
+  const result = parseRecommendationEditFormData(formData);
+
+  if (!result.success) {
+    throw new ClinicalRecommendationValidationError(zodFieldErrors(result.error));
+  }
+
+  return result.data;
+}
+
+export function parseShareSectionsSelection(formData: FormData) {
+  return parseShareSectionsFormData(formData);
 }
 
 export function validateGenerateRecommendationFormData(formData: FormData) {

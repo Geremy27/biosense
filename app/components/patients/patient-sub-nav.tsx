@@ -27,7 +27,7 @@ export function PatientSubNav({ patientId }: PatientSubNavProps) {
         to={`${basePath}/medical-histories`}
         className={({ isActive }) => (isActive ? 'filter-tab-active' : 'filter-tab')}
       >
-        Antecedentes
+        Historial
       </NavLink>
       <NavLink
         to={`${basePath}/labs`}

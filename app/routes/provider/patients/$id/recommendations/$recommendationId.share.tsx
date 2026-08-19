@@ -12,6 +12,13 @@ import {
 import { buildActorContext } from '~/utils/session.server';
 import { asRecommendationOutput, shareableSectionValues } from '~/validation/recommendations';
 import type { ShareableSection } from '~/validation/recommendations';
+import {
+  calculateAgeYears,
+  formatBmi,
+  formatMeasurement,
+  formatPatientName,
+  formatSex,
+} from '~/utils/patient-display';
 
 import type { PatientOutletContext } from '../patient-outlet-context';
 import type { Route } from './+types/$recommendationId.share';
@@ -26,7 +33,6 @@ const SECTION_LABELS: Record<ShareableSection, string> = {
 };
 
 const DEFAULT_SECTIONS: ShareableSection[] = [
-  'context',
   'conclusions',
   'recommendations',
   'lifestyle',
@@ -40,6 +46,41 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function shareHeaderFields(patient: PatientOutletContext['patient']) {
+  const bmi = formatBmi(patient.heightCm, patient.weightKg);
+  const fields: Array<{ label: string; value: string }> = [
+    { label: 'Edad', value: `${calculateAgeYears(patient.birthDate)} años` },
+    { label: 'Sexo', value: formatSex(patient.sex) },
+    {
+      label: 'Fecha de nacimiento',
+      value: new Date(`${patient.birthDate}T00:00:00`).toLocaleDateString('es-CO'),
+    },
+    { label: 'Lugar de nacimiento', value: patient.birthPlace },
+    { label: 'Ciudad / región', value: patient.residenceRegionName ?? '—' },
+    { label: 'Residencia', value: patient.residencePlace },
+  ];
+
+  if (patient.ethnicity) {
+    fields.push({ label: 'Etnia', value: patient.ethnicity });
+  }
+
+  const height = formatMeasurement(patient.heightCm, 'cm');
+  if (height) {
+    fields.push({ label: 'Estatura', value: height });
+  }
+
+  const weight = formatMeasurement(patient.weightKg, 'kg');
+  if (weight) {
+    fields.push({ label: 'Peso', value: weight });
+  }
+
+  if (bmi) {
+    fields.push({ label: 'IMC', value: bmi });
+  }
+
+  return fields;
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -76,9 +117,11 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
   const { patient } = useOutletContext<PatientOutletContext>();
   const { recommendation } = loaderData;
   const output = asRecommendationOutput(recommendation.output);
-  const savedSections = Array.isArray(recommendation.shareSections)
-    ? (recommendation.shareSections as ShareableSection[])
-    : DEFAULT_SECTIONS;
+  const savedSections = (
+    Array.isArray(recommendation.shareSections)
+      ? (recommendation.shareSections as ShareableSection[])
+      : DEFAULT_SECTIONS
+  ).filter((section) => section !== 'context' && section !== 'executiveSummary');
   const [selected, setSelected] = useState<ShareableSection[]>(savedSections);
   const [isSavingPdf, setIsSavingPdf] = useState(false);
   const submit = useSubmit();
@@ -232,7 +275,7 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
         </h3>
         <div className="grid gap-3 sm:grid-cols-2">
           {shareableSectionValues
-            .filter((section) => section !== 'executiveSummary')
+            .filter((section) => section !== 'executiveSummary' && section !== 'context')
             .map((section) => (
               <label key={section} className="flex items-center gap-2 text-sm text-slate-700">
                 <input
@@ -271,10 +314,18 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
           <p className="text-xs font-semibold uppercase tracking-wider text-cyan-600">
             {APP_NAME}
           </p>
-          <h3 className="mt-1 text-xl font-bold text-cyan-950">
-            {patient.firstName} {patient.firstLastName}
-          </h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <h3 className="mt-1 text-xl font-bold text-cyan-950">{formatPatientName(patient)}</h3>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {shareHeaderFields(patient).map((field) => (
+              <div key={field.label}>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  {field.label}
+                </dt>
+                <dd className="mt-1 text-sm text-slate-700">{field.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 text-sm text-slate-500">
             Reporte generado el{' '}
             {new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' }).format(new Date())}
           </p>

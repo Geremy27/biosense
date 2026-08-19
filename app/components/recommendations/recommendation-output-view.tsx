@@ -49,7 +49,7 @@ export function RecommendationOutputView({
         </section>
       ) : null}
 
-      {showSection('context') ? (
+      {isProvider && showSection('context') ? (
         <section data-pdf-block className="card">
           <h3 className="text-lg font-bold text-cyan-950">Contexto clínico usado</h3>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2">

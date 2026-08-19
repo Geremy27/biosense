@@ -3,6 +3,7 @@ import {
   formatIdentification,
   formatPatientName,
   formatSex,
+  formatMeasurement,
 } from '~/utils/patient-display';
 
 type PatientSummaryPatient = {
@@ -24,23 +25,14 @@ type PatientSummaryPatient = {
   weightKg?: string | null;
 };
 
-type SummaryField = {
-  label: string;
-  value: string;
-};
-
 type PatientSummaryProps = {
   patient: PatientSummaryPatient;
 };
 
-// Formats optional numeric patient measurements for display.
-function formatMeasurement(value: string | null | undefined, unit: string) {
-  if (!value) {
-    return '—';
-  }
-
-  return `${value} ${unit}`;
-}
+type SummaryField = {
+  label: string;
+  value: string;
+};
 
 // Renders read-only patient demographics on the view page.
 export function PatientSummary({ patient }: PatientSummaryProps) {
@@ -60,8 +52,8 @@ export function PatientSummary({ patient }: PatientSummaryProps) {
     { label: 'Correo electrónico', value: patient.email ?? '—' },
     { label: 'Sexo', value: formatSex(patient.sex) },
     { label: 'Etnia', value: patient.ethnicity ?? '—' },
-    { label: 'Altura', value: formatMeasurement(patient.heightCm, 'cm') },
-    { label: 'Peso', value: formatMeasurement(patient.weightKg, 'kg') },
+    { label: 'Altura', value: formatMeasurement(patient.heightCm, 'cm') ?? '—' },
+    { label: 'Peso', value: formatMeasurement(patient.weightKg, 'kg') ?? '—' },
   ];
 
   return (

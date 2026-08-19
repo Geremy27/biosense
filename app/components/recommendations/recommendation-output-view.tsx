@@ -1,6 +1,6 @@
-import { Brain, Dumbbell, Utensils } from 'lucide-react';
+import { Brain, Dumbbell, Utensils, type LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-import { LifestyleCard } from '~/components/recommendations/lifestyle-card';
 import {
   formatFindingDomain,
   formatFindingSeverity,
@@ -17,12 +17,14 @@ type RecommendationOutputViewProps = {
   /** When provided, restricts the shareable sections to this list (used by
    * the share/print screen). Omit to show every section for the audience. */
   visibleSections?: ShareableSection[];
+  residenceRegionName?: string | null;
 };
 
 export function RecommendationOutputView({
   output,
   audience = 'provider',
   visibleSections,
+  residenceRegionName,
 }: RecommendationOutputViewProps) {
   const isProvider = audience === 'provider';
   const showSection = (section: ShareableSection) =>
@@ -182,31 +184,92 @@ export function RecommendationOutputView({
       {showSection('lifestyle') ? (
         <section data-pdf-block className="space-y-4">
           <h3 className="text-lg font-bold text-cyan-950">Sugerencias de estilo de vida</h3>
-          {isProvider ? (
-            <p className="text-sm text-slate-500">Toca cada tarjeta para ver el detalle completo.</p>
-          ) : null}
-          <div data-pdf-lifestyle-grid className="grid gap-4 sm:grid-cols-3">
-            <LifestyleCard
-              title="1. Nutricional"
+          <div className="space-y-4">
+            <LifestyleSection
+              title="Nutrición"
               icon={Utensils}
-              item={output.lifestyle.nutrition}
-              audience={audience}
-              details={<NutritionDetails nutrition={output.lifestyle.nutrition} />}
-            />
-            <LifestyleCard
-              title="2. Ejercicio"
+              keyNumbers={output.lifestyle.nutrition.keyNumbers}
+              patientSummary={output.lifestyle.nutrition.patientSummary}
+              guidance={output.lifestyle.nutrition.guidance}
+              rationale={showRationale ? output.lifestyle.nutrition.rationale : ''}
+              meta={
+                <>
+                  {output.lifestyle.nutrition.dietType ? (
+                    <p className="text-sm text-slate-600">
+                      <span className="font-medium text-cyan-900">Tipo de dieta: </span>
+                      {output.lifestyle.nutrition.dietType}
+                    </p>
+                  ) : null}
+                  {residenceRegionName ? (
+                    <p className="text-sm text-slate-600">
+                      <span className="font-medium text-cyan-900">Ciudad / región: </span>
+                      {residenceRegionName}
+                    </p>
+                  ) : null}
+                </>
+              }
+            >
+              <div data-pdf-lifestyle-subgrid className="grid gap-4 md:grid-cols-2">
+                <NutritionSubsection title="Macros" block={output.lifestyle.nutrition.macros} />
+                <NutritionSubsection title="Micros" block={output.lifestyle.nutrition.micros} />
+              </div>
+            </LifestyleSection>
+
+            <LifestyleSection
+              title="Ejercicio"
               icon={Dumbbell}
-              item={output.lifestyle.exercise}
-              audience={audience}
-              details={<ExerciseDetails exercise={output.lifestyle.exercise} />}
-            />
-            <LifestyleCard
-              title="3. Mental y sueño"
+              keyNumbers={output.lifestyle.exercise.keyNumbers}
+              patientSummary={output.lifestyle.exercise.patientSummary}
+              guidance={output.lifestyle.exercise.guidance}
+              rationale={showRationale ? output.lifestyle.exercise.rationale : ''}
+            >
+              <div data-pdf-lifestyle-subgrid className="grid gap-4 md:grid-cols-3">
+                <LabeledSubsection title="Tipo" body={output.lifestyle.exercise.type} />
+                <LabeledSubsection title="Duración" body={output.lifestyle.exercise.duration} />
+                <LabeledSubsection
+                  title="Intensidad"
+                  body={output.lifestyle.exercise.intensity}
+                  extra={
+                    output.lifestyle.exercise.intensityExplanation
+                      ? {
+                          label: 'Qué significa',
+                          body: output.lifestyle.exercise.intensityExplanation,
+                        }
+                      : null
+                  }
+                />
+              </div>
+            </LifestyleSection>
+
+            <LifestyleSection
+              title="Mental y sueño"
               icon={Brain}
-              item={output.lifestyle.mentalAndSleep}
-              audience={audience}
-              details={<MentalSleepDetails mental={output.lifestyle.mentalAndSleep} />}
-            />
+              keyNumbers={output.lifestyle.mentalAndSleep.keyNumbers}
+              patientSummary={output.lifestyle.mentalAndSleep.patientSummary}
+              guidance={output.lifestyle.mentalAndSleep.guidance}
+              rationale={showRationale ? output.lifestyle.mentalAndSleep.rationale : ''}
+            >
+              {output.lifestyle.mentalAndSleep.practices.length > 0 ? (
+                <div
+                  data-pdf-lifestyle-subgrid
+                  className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                >
+                  {output.lifestyle.mentalAndSleep.practices.map((practice, index) => (
+                    <LabeledSubsection
+                      key={index}
+                      title={practice.what || `Práctica ${index + 1}`}
+                      extra={
+                        practice.howToKnow
+                          ? { label: 'Cómo saber que va bien', body: practice.howToKnow }
+                          : null
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">Sin prácticas estructuradas.</p>
+              )}
+            </LifestyleSection>
           </div>
         </section>
       ) : null}
@@ -266,119 +329,132 @@ export function RecommendationOutputView({
   );
 }
 
-function NutritionDetails({
-  nutrition,
+function LifestyleSection({
+  title,
+  icon: Icon,
+  keyNumbers,
+  patientSummary,
+  guidance,
+  rationale,
+  meta,
+  children,
 }: {
-  nutrition: RecommendationOutput['lifestyle']['nutrition'];
+  title: string;
+  icon: LucideIcon;
+  keyNumbers: Array<{ label: string; value: string }>;
+  patientSummary: string;
+  guidance: string;
+  rationale: string;
+  meta?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="space-y-3 text-sm text-slate-700">
-      {nutrition.dietType ? (
-        <p>
-          <span className="font-medium text-cyan-900">Tipo de dieta: </span>
-          {nutrition.dietType}
+    <article className="card space-y-4">
+      <header className="flex items-start gap-3">
+        <div className="icon-container shrink-0">
+          <Icon className="size-5 text-cyan-600" aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <h4 className="text-lg font-bold text-cyan-950">{title}</h4>
+          {meta}
+          {keyNumbers.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {keyNumbers.map((keyNumber, index) => (
+                <span
+                  key={index}
+                  className="rounded-lg bg-cyan-50 px-2 py-1 text-xs font-semibold text-cyan-900"
+                >
+                  {keyNumber.label}: {keyNumber.value}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {patientSummary ? (
+            <p className="text-sm leading-relaxed text-slate-700">{patientSummary}</p>
+          ) : null}
+        </div>
+      </header>
+
+      {children}
+
+      {guidance ? (
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{guidance}</p>
+      ) : null}
+      {rationale ? (
+        <p className="text-sm leading-relaxed text-slate-600">
+          <span className="font-medium text-cyan-900">Por qué (para el médico): </span>
+          {rationale}
         </p>
       ) : null}
-      <NutritionBlock title="Macros" block={nutrition.macros} />
-      <NutritionBlock title="Micros" block={nutrition.micros} />
-    </div>
+    </article>
   );
 }
 
-function NutritionBlock({
+function NutritionSubsection({
   title,
   block,
 }: {
   title: string;
   block: RecommendationOutput['lifestyle']['nutrition']['macros'];
 }) {
-  if (!block.targets && block.sources.length === 0) {
-    return null;
-  }
-
   return (
-    <div className="rounded-lg border border-cyan-100 bg-white/70 p-3">
+    <div className="rounded-lg border border-cyan-100 bg-cyan-50/40 p-4">
       <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">{title}</p>
-      {block.targets ? <p className="mt-1 leading-relaxed">{block.targets}</p> : null}
+      {block.targets ? (
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">{block.targets}</p>
+      ) : null}
       {block.sources.length > 0 ? (
-        <ul className="mt-2 list-disc space-y-1 pl-4">
+        <ul className="mt-3 space-y-3 text-sm text-slate-700">
           {block.sources.map((source, index) => (
             <li key={index}>
-              <span className="font-medium">{source.nutrient}</span>
-              {source.amount ? ` — ${source.amount}` : ''}
-              {source.foods.length > 0 ? ` · Alimentos: ${source.foods.join(', ')}` : ''}
-              {source.localProducts.length > 0
-                ? ` · Locales: ${source.localProducts.join(', ')}`
-                : ''}
+              <p className="font-semibold text-cyan-950">
+                {source.nutrient}
+                {source.amount ? ` — ${source.amount}` : ''}
+              </p>
+              {source.foods.length > 0 ? (
+                <p className="mt-1">
+                  <span className="font-medium text-cyan-900">Obtener de: </span>
+                  {source.foods.join(', ')}
+                </p>
+              ) : null}
+              {source.localProducts.length > 0 ? (
+                <p className="mt-1">
+                  <span className="font-medium text-cyan-900">En tu ciudad: </span>
+                  {source.localProducts.join(', ')}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
-      ) : null}
+      ) : (
+        <p className="mt-2 text-sm text-slate-500">Sin detalle estructurado.</p>
+      )}
     </div>
   );
 }
 
-function ExerciseDetails({
-  exercise,
+function LabeledSubsection({
+  title,
+  body,
+  extra,
 }: {
-  exercise: RecommendationOutput['lifestyle']['exercise'];
+  title: string;
+  body?: string;
+  extra?: { label: string; body: string } | null;
 }) {
-  if (
-    !exercise.type &&
-    !exercise.duration &&
-    !exercise.intensity &&
-    !exercise.intensityExplanation
-  ) {
-    return null;
-  }
-
   return (
-    <div className="space-y-2 rounded-lg border border-cyan-100 bg-white/70 p-3 text-sm text-slate-700">
-      {exercise.type ? (
-        <p>
-          <span className="font-medium text-cyan-900">Tipo: </span>
-          {exercise.type}
-        </p>
+    <div className="rounded-lg border border-cyan-100 bg-cyan-50/40 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">{title}</p>
+      {body ? <p className="mt-2 text-sm leading-relaxed text-slate-700">{body}</p> : null}
+      {!body && !extra ? (
+        <p className="mt-2 text-sm text-slate-500">Sin detalle estructurado.</p>
       ) : null}
-      {exercise.duration ? (
-        <p>
-          <span className="font-medium text-cyan-900">Duración: </span>
-          {exercise.duration}
-        </p>
-      ) : null}
-      {exercise.intensity ? (
-        <p>
-          <span className="font-medium text-cyan-900">Intensidad: </span>
-          {exercise.intensity}
-        </p>
-      ) : null}
-      {exercise.intensityExplanation ? (
-        <p>
-          <span className="font-medium text-cyan-900">Qué significa: </span>
-          {exercise.intensityExplanation}
+      {extra ? (
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">
+          <span className="font-medium text-cyan-900">{extra.label}: </span>
+          {extra.body}
         </p>
       ) : null}
     </div>
-  );
-}
-
-function MentalSleepDetails({
-  mental,
-}: {
-  mental: RecommendationOutput['lifestyle']['mentalAndSleep'];
-}) {
-  if (mental.practices.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul className="space-y-2 rounded-lg border border-cyan-100 bg-white/70 p-3 text-sm text-slate-700">
-      {mental.practices.map((practice, index) => (
-        <li key={index}>
-          <p className="font-medium text-cyan-900">{practice.what}</p>
-          <p className="mt-0.5 text-slate-600">Cómo saber que va bien: {practice.howToKnow}</p>
-        </li>
-      ))}
-    </ul>
   );
 }

@@ -279,7 +279,12 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
             {new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' }).format(new Date())}
           </p>
         </div>
-        <RecommendationOutputView output={output} audience="patient" visibleSections={selected} />
+        <RecommendationOutputView
+          output={output}
+          audience="patient"
+          visibleSections={selected}
+          residenceRegionName={patient.residenceRegionName}
+        />
       </div>
     </div>
   );

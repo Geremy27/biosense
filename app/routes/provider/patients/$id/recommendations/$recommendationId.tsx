@@ -223,7 +223,11 @@ export default function RecommendationDetail({ loaderData, actionData }: Route.C
               onCancel={() => setIsEditing(false)}
             />
           ) : (
-            <RecommendationOutputView output={output} audience="provider" />
+            <RecommendationOutputView
+              output={output}
+              audience="provider"
+              residenceRegionName={patient.residenceRegionName}
+            />
           )}
 
           {!isEditing && recommendation.status === ClinicalRecommendationStatus.PENDING_REVIEW ? (

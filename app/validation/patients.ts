@@ -58,7 +58,10 @@ export const patientInputSchema = z.object({
     ),
   birthPlace: z.string().trim().min(1, 'El lugar de nacimiento es obligatorio.'),
   residencePlace: z.string().trim().min(1, 'El lugar de residencia es obligatorio.'),
-  residenceRegionId: z.string().uuid({ message: 'Selecciona una ciudad/región de residencia.' }),
+  residenceRegionId: z
+    .string()
+    .trim()
+    .pipe(z.guid({ message: 'Selecciona una ciudad/región de residencia.' })),
   phone: z.string().trim().min(7, 'El teléfono es obligatorio.'),
   email: z
     .string()

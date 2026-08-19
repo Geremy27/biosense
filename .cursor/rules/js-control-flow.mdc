@@ -1,0 +1,157 @@
+---
+description: Control-flow style — no continue, return values immediately, braced returns, nesting limits
+globs: '**/*.js'
+alwaysApply: false
+---
+
+# JS control flow
+
+## 1. Never use `continue` in for loops
+
+Prefer nested `if` (or extract a helper) so the loop body reads top-to-bottom.
+
+```js
+// ❌ BAD
+for (const row of rows) {
+  if (kids.length < 2) continue;
+  map[label] = value;
+}
+
+// ✅ GOOD
+for (const row of rows) {
+  if (kids.length >= 2) {
+    map[label] = value;
+  }
+}
+```
+
+## 2. No one-line returns
+
+`return` must be inside braces — never `if (x) return y`.
+
+```js
+// ❌ BAD
+if (!root) return map;
+
+// ✅ GOOD
+if (!root) {
+  return map;
+}
+```
+
+## 3. Blank line before multi-statement returns
+
+If a `return` is not a one-liner inside braces (`if (x) { return y; }`), put a blank line (or at least a space) before it.
+
+```js
+// ❌ BAD
+function labelMap(root) {
+  const map = {};
+  if (root) {
+    /* ... */
+  }
+  return map;
+}
+
+// ✅ GOOD
+function labelMap(root) {
+  const map = {};
+
+  if (root) {
+    /* ... */
+  }
+
+  return map;
+}
+```
+
+## 4. Return values immediately — no temp `result` variable
+
+When a branch already knows what to return, `return` it there. Do not assign into a temporary and return once at the bottom.
+
+```js
+// ❌ BAD — pointless temp variable
+let result;
+
+if (!location.hostname.includes('costar.com')) {
+  result = {
+    error: 'Open a CoStar property page in this tab, then scrape again.',
+    currentUrl: location.href,
+  };
+} else {
+  result = buildPayload();
+}
+
+return result;
+
+// ✅ GOOD — return what you need right away
+if (!location.hostname.includes('costar.com')) {
+  return {
+    error: 'Open a CoStar property page in this tab, then scrape again.',
+    currentUrl: location.href,
+  };
+}
+
+return buildPayload();
+```
+
+Bare void early exits (`return;` to skip work) are still wrong — wrap the work in `if` instead:
+
+```js
+// ❌ BAD
+const add = (src, caption = null) => {
+  if (!src) return;
+  if (existing) {
+    existing.caption = caption;
+    return;
+  }
+  bySrc.set(src, { src, caption });
+};
+
+// ✅ GOOD
+const add = (src, caption = null) => {
+  if (src) {
+    if (existing) {
+      existing.caption = caption;
+    } else {
+      bySrc.set(src, { src, caption });
+    }
+  }
+};
+```
+
+## 5. Max 4 levels of `if` nesting per function
+
+Count nested `if` depth inside one function body. At 4 levels, extract helpers so the parent shows about 2 levels again; those helpers may nest up to 4, and so on.
+
+```js
+// ❌ BAD — 5+ if levels in one function
+function labelMap(root) {
+  if (root) {
+    for (const row of rows) {
+      if (kids.length >= 2) {
+        if (label) {
+          if (label.length <= 80) {
+            if (!Object.hasOwn(map, label)) {
+              map[label] = value;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ✅ GOOD — parent stays shallow; detail lives in a helper
+function labelMap(root) {
+  const map = {};
+
+  if (root) {
+    for (const row of rows) {
+      addLabelFromRow(map, row);
+    }
+  }
+
+  return map;
+}
+```

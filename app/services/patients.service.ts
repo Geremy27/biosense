@@ -1,5 +1,6 @@
 import { AuditAction } from '~/db/models/enums';
 import { findProviderById } from '~/db/repositories/providers.repository';
+import { findNutritionRegionById } from '~/db/repositories/nutrition-regions.repository';
 import {
   findPatientById,
   findPatientByIdentification,
@@ -56,7 +57,15 @@ export async function getPatient(ctx: ActorContext, id: string) {
     metadata: { found: row !== null },
   });
 
-  return row;
+  if (!row) {
+    return null;
+  }
+
+  const region = row.residenceRegionId
+    ? await findNutritionRegionById(row.residenceRegionId)
+    : null;
+
+  return { ...row, residenceRegionName: region?.name ?? null };
 }
 
 // Creates a patient assigned to the current provider.
@@ -184,6 +193,7 @@ function toPatientValues(input: PatientInput) {
     birthDate: input.birthDate,
     birthPlace: input.birthPlace,
     residencePlace: input.residencePlace,
+    residenceRegionId: input.residenceRegionId,
     phone: input.phone,
     email: input.email,
     sex: input.sex,

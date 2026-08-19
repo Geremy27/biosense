@@ -2,6 +2,7 @@ export * from './audit.repository';
 export * from './clinical-recommendations.repository';
 export * from './lab-analytes.repository';
 export * from './lab-reports.repository';
+export * from './nutrition-regions.repository';
 export * from './organizations.repository';
 export * from './patient-medical-histories.repository';
 export * from './patients.repository';

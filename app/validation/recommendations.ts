@@ -27,23 +27,103 @@ const lifestyleKeyNumberSchema = z.object({
   value: z.string(),
 });
 
-const lifestyleItemSchema = z.object({
-  // Detailed, actionable plan. Shown to both patient and provider.
+const lifestyleBaseSchema = z.object({
   guidance: z.string(),
-  // Deep, dense scientific rationale. Provider-only, revealed on click, never printed for the patient.
   rationale: z.string(),
-  // Clear, simple "why this matters" in plain language, for the patient. Shown directly in print/PDF.
   patientSummary: z.string().default(''),
-  // Quick at-a-glance facts, e.g. { label: "Proteína", value: "120 g/día" }. Max 4, shown on the collapsed card.
   keyNumbers: z.array(lifestyleKeyNumberSchema).max(4).default([]),
 });
 
-function asLifestyleItem(value: unknown) {
+const nutrientSourceSchema = z.object({
+  nutrient: z.string(),
+  amount: z.string().nullable(),
+  foods: z.array(z.string()).default([]),
+  localProducts: z.array(z.string()).default([]),
+});
+
+const nutritionBlockSchema = z.object({
+  targets: z.string().default(''),
+  sources: z.array(nutrientSourceSchema).default([]),
+});
+
+export const nutritionLifestyleSchema = lifestyleBaseSchema.extend({
+  dietType: z.string().nullable().default(null),
+  macros: nutritionBlockSchema.default({ targets: '', sources: [] }),
+  micros: nutritionBlockSchema.default({ targets: '', sources: [] }),
+});
+
+export const exerciseLifestyleSchema = lifestyleBaseSchema.extend({
+  type: z.string().default(''),
+  duration: z.string().default(''),
+  intensity: z.string().default(''),
+  intensityExplanation: z.string().default(''),
+});
+
+export const mentalSleepLifestyleSchema = lifestyleBaseSchema.extend({
+  practices: z
+    .array(
+      z.object({
+        what: z.string(),
+        howToKnow: z.string(),
+      }),
+    )
+    .default([]),
+});
+
+function asLifestyleBase(value: unknown) {
   if (typeof value === 'string') {
     return { guidance: value, rationale: '', patientSummary: '', keyNumbers: [] };
   }
 
+  if (!value || typeof value !== 'object') {
+    return { guidance: '', rationale: '', patientSummary: '', keyNumbers: [] };
+  }
+
   return value;
+}
+
+function asNutritionLifestyle(value: unknown) {
+  const base = asLifestyleBase(value);
+  const parsed = nutritionLifestyleSchema.safeParse(base);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  return nutritionLifestyleSchema.parse({
+    ...base,
+    dietType: null,
+    macros: { targets: '', sources: [] },
+    micros: { targets: '', sources: [] },
+  });
+}
+
+function asExerciseLifestyle(value: unknown) {
+  const base = asLifestyleBase(value);
+  const parsed = exerciseLifestyleSchema.safeParse(base);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  return exerciseLifestyleSchema.parse({
+    ...base,
+    type: '',
+    duration: '',
+    intensity: '',
+    intensityExplanation: '',
+  });
+}
+
+function asMentalSleepLifestyle(value: unknown) {
+  const base = asLifestyleBase(value);
+  const parsed = mentalSleepLifestyleSchema.safeParse(base);
+  if (parsed.success) {
+    return parsed.data;
+  }
+
+  return mentalSleepLifestyleSchema.parse({
+    ...base,
+    practices: [],
+  });
 }
 
 export const shareableSectionValues = [
@@ -62,8 +142,6 @@ export const recommendationOutputSchema = z.object({
     ageYears: z.number(),
     sex: z.string().nullable(),
   }),
-  // Short bullets so a provider with many patients can skim before reading
-  // the full report. Provider-only, never shared with the patient.
   executiveSummary: z.array(z.string()).max(4).default([]),
   findings: z.array(
     z.object({
@@ -87,9 +165,9 @@ export const recommendationOutputSchema = z.object({
   conclusions: z.array(conclusionItemSchema).max(3),
   recommendations: z.array(recommendationItemSchema),
   lifestyle: z.object({
-    nutrition: lifestyleItemSchema,
-    exercise: lifestyleItemSchema,
-    mentalAndSleep: lifestyleItemSchema,
+    nutrition: nutritionLifestyleSchema,
+    exercise: exerciseLifestyleSchema,
+    mentalAndSleep: mentalSleepLifestyleSchema,
   }),
   possibleSupplements: z
     .array(
@@ -132,23 +210,19 @@ export function asRecommendationOutput(value: unknown): RecommendationOutput | n
     ...value,
     conclusions: Array.isArray(legacy.conclusions)
       ? legacy.conclusions.map((item) =>
-          typeof item === 'string'
-            ? { statement: item, rationale: '' }
-            : item,
+          typeof item === 'string' ? { statement: item, rationale: '' } : item,
         )
       : [],
     recommendations: Array.isArray(legacy.recommendations)
       ? legacy.recommendations.map((item) =>
-          typeof item === 'string'
-            ? { action: item, rationale: '' }
-            : item,
+          typeof item === 'string' ? { action: item, rationale: '' } : item,
         )
       : [],
     lifestyle: legacy.lifestyle
       ? {
-          nutrition: asLifestyleItem(legacy.lifestyle.nutrition),
-          exercise: asLifestyleItem(legacy.lifestyle.exercise),
-          mentalAndSleep: asLifestyleItem(legacy.lifestyle.mentalAndSleep),
+          nutrition: asNutritionLifestyle(legacy.lifestyle.nutrition),
+          exercise: asExerciseLifestyle(legacy.lifestyle.exercise),
+          mentalAndSleep: asMentalSleepLifestyle(legacy.lifestyle.mentalAndSleep),
         }
       : undefined,
   };
@@ -197,9 +271,9 @@ export const recommendationEditInputSchema = z.object({
   conclusions: z.array(conclusionItemSchema).max(3),
   recommendations: z.array(recommendationItemSchema),
   lifestyle: z.object({
-    nutrition: lifestyleItemSchema,
-    exercise: lifestyleItemSchema,
-    mentalAndSleep: lifestyleItemSchema,
+    nutrition: nutritionLifestyleSchema,
+    exercise: exerciseLifestyleSchema,
+    mentalAndSleep: mentalSleepLifestyleSchema,
   }),
   possibleSupplements: z
     .array(
@@ -216,15 +290,6 @@ export const recommendationEditInputSchema = z.object({
 
 export type RecommendationEditInput = z.infer<typeof recommendationEditInputSchema>;
 
-function parseLifestyleEditField(formData: FormData, prefix: string) {
-  return {
-    guidance: String(formData.get(`${prefix}Guidance`) ?? ''),
-    rationale: String(formData.get(`${prefix}Rationale`) ?? ''),
-    patientSummary: String(formData.get(`${prefix}PatientSummary`) ?? ''),
-    keyNumbers: JSON.parse(String(formData.get(`${prefix}KeyNumbersJson`) ?? '[]')),
-  };
-}
-
 export function parseRecommendationEditFormData(formData: FormData) {
   try {
     return recommendationEditInputSchema.safeParse({
@@ -232,11 +297,7 @@ export function parseRecommendationEditFormData(formData: FormData) {
       conclusions: JSON.parse(String(formData.get('conclusionsJson') ?? '[]')),
       recommendations: JSON.parse(String(formData.get('recommendationsJson') ?? '[]')),
       possibleSupplements: JSON.parse(String(formData.get('possibleSupplementsJson') ?? '[]')),
-      lifestyle: {
-        nutrition: parseLifestyleEditField(formData, 'lifestyleNutrition'),
-        exercise: parseLifestyleEditField(formData, 'lifestyleExercise'),
-        mentalAndSleep: parseLifestyleEditField(formData, 'lifestyleMentalAndSleep'),
-      },
+      lifestyle: JSON.parse(String(formData.get('lifestyleJson') ?? '{}')),
     });
   } catch {
     return recommendationEditInputSchema.safeParse(null);

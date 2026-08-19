@@ -15,6 +15,7 @@ type PatientSummaryPatient = {
   birthDate: string;
   birthPlace: string;
   residencePlace: string;
+  residenceRegionName?: string | null;
   phone: string;
   email?: string | null;
   sex?: Sex | null;
@@ -53,7 +54,8 @@ export function PatientSummary({ patient }: PatientSummaryProps) {
       value: new Date(`${patient.birthDate}T00:00:00`).toLocaleDateString('es-CO'),
     },
     { label: 'Lugar de nacimiento', value: patient.birthPlace },
-    { label: 'Lugar de residencia', value: patient.residencePlace },
+    { label: 'Ciudad / región', value: patient.residenceRegionName ?? '—' },
+    { label: 'Detalle de residencia', value: patient.residencePlace },
     { label: 'Teléfono', value: patient.phone },
     { label: 'Correo electrónico', value: patient.email ?? '—' },
     { label: 'Sexo', value: formatSex(patient.sex) },

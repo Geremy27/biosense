@@ -3,23 +3,39 @@ import { Form, Link, redirect, useActionData, useOutletContext } from 'react-rou
 
 import { APP_NAME } from '~/brand';
 import { FieldError } from '~/components/forms/field-error';
+import { FormField } from '~/components/forms/form-field';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import { SubmitButton } from '~/components/forms/submit-button';
+import { EmptyState } from '~/components/ui/empty-state';
+import { MedicalHistoryStatus } from '~/db/models/enums';
 import {
   LabReportValidationError,
+  listLabUploadMedicalHistories,
   uploadAndExtractLabReport,
 } from '~/services/lab-reports.service';
+import { formatMedicalHistoryDate } from '~/utils/medical-history-display';
 import { buildActorContext } from '~/utils/session.server';
 
 import type { PatientOutletContext } from '../patient-outlet-context';
 import type { Route } from './+types/new';
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const ctx = await buildActorContext(request);
+  const medicalHistories = await listLabUploadMedicalHistories(ctx, params.id);
+  return { medicalHistories };
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
   const ctx = await buildActorContext(request);
 
   try {
-    const report = await uploadAndExtractLabReport(ctx, params.id, formData.get('pdf'));
+    const report = await uploadAndExtractLabReport(
+      ctx,
+      params.id,
+      formData.get('pdf'),
+      String(formData.get('medicalHistoryId') ?? ''),
+    );
     if (!report) {
       throw new Response('No encontrado', { status: 404 });
     }
@@ -34,9 +50,38 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-export default function NewLabReport() {
+export default function NewLabReport({ loaderData }: Route.ComponentProps) {
   const { patient } = useOutletContext<PatientOutletContext>();
   const actionData = useActionData<typeof action>();
+  const { medicalHistories } = loaderData;
+  const defaultHistoryId =
+    medicalHistories.find((history) => history.status === MedicalHistoryStatus.CONFIRMED)?.id ??
+    medicalHistories[0]?.id ??
+    '';
+
+  if (medicalHistories.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <p className="eyebrow">Laboratorios</p>
+          <h2 className="mt-1 text-2xl font-bold text-cyan-950">Subir informe</h2>
+        </div>
+        <EmptyState
+          icon={FileText}
+          title="No hay historial médico"
+          description="Debes crear un historial médico para este paciente antes de subir exámenes."
+          action={
+            <Link
+              to={`/provider/patients/${patient.id}/medical-histories/new`}
+              className="btn-primary"
+            >
+              Crear historial médico
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -51,6 +96,23 @@ export default function NewLabReport() {
 
       <Form method="post" encType="multipart/form-data" className="card space-y-6">
         <FormPendingFieldset className="space-y-6">
+          <FormField id="medicalHistoryId" label="Historial médico asociado">
+            <select
+              id="medicalHistoryId"
+              name="medicalHistoryId"
+              className="input"
+              required
+              defaultValue={defaultHistoryId}
+            >
+              {medicalHistories.map((history) => (
+                <option key={history.id} value={history.id}>
+                  {history.title} — {formatMedicalHistoryDate(history.recordedAt)}
+                </option>
+              ))}
+            </select>
+            <FieldError message={actionData?.errors?.medicalHistoryId} />
+          </FormField>
+
           <div className="rounded-lg border border-dashed border-cyan-300 bg-cyan-50 p-6">
             <div className="flex items-start gap-4">
               <div className="icon-container">
@@ -78,20 +140,11 @@ export default function NewLabReport() {
             <ShieldCheck className="mt-0.5 size-5 shrink-0 text-cyan-600" aria-hidden />
             <p className="text-sm leading-relaxed text-slate-600">
               Los resultados extraídos no se guardarán como definitivos hasta que los revises y
-              confirmes. Conserva el PDF original para comparar los valores antes de confirmar.
+              confirmes.
             </p>
           </div>
 
-          {actionData?.errors?._form ? (
-            <p className="text-sm text-red-600">{actionData.errors._form}</p>
-          ) : null}
-
-          <div className="flex gap-3">
-            <SubmitButton loadingLabel="Analizando PDF…">Subir y analizar</SubmitButton>
-            <Link to={`/provider/patients/${patient.id}/labs`} className="btn-ghost">
-              Cancelar
-            </Link>
-          </div>
+          <SubmitButton loadingLabel="Subiendo y extrayendo…">Subir y extraer</SubmitButton>
         </FormPendingFieldset>
       </Form>
     </div>

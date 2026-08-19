@@ -115,10 +115,10 @@ export async function ensureDefaultRecommendationPrompt(createdByUserId?: string
 
   return insertRecommendationPrompt({
     slug: DEFAULT_RECOMMENDATION_PROMPT_SLUG,
-    name: 'Medicina funcional y longevidad v2',
+    name: 'Medicina funcional y longevidad v3',
     systemPrompt: DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
     userPromptTemplate: DEFAULT_RECOMMENDATION_INSTRUCTIONS,
-    outputSchemaVersion: 2,
+    outputSchemaVersion: 3,
     model: process.env.OPENAI_MODEL ?? 'gpt-4o',
     isActive: true,
     createdByUserId: createdByUserId ?? null,

@@ -1,6 +1,7 @@
 import { AuditAction, MedicalHistoryStatus } from '~/db/models/enums';
 import {
   confirmMedicalHistory as confirmMedicalHistoryRow,
+  findLatestMedicalHistoryForPrefill,
   findMedicalHistoriesByPatientId,
   findMedicalHistoryByPatientAndId,
   findPatientById,
@@ -10,8 +11,12 @@ import {
   updateMedicalHistoryExtractionState,
 } from '~/db/repositories';
 import {
+  clinicalDefaultsFromHistory,
+  emptyMedicalHistoryClinicalDefaults,
+  mergeClinicalHistoryFromPrevious,
   parseConfirmMedicalHistoryFormData,
   parseMedicalHistoryFormData,
+  type DatedHistoryItem,
   type MedicalHistoryInput,
 } from '~/validation/medical-history';
 import { zodFieldErrors } from '~/validation/zod-errors';
@@ -44,6 +49,28 @@ export async function listMedicalHistories(ctx: ActorContext, patientId: string)
   });
 
   return rows;
+}
+
+export async function getMedicalHistoryPrefillDefaults(ctx: ActorContext, patientId: string) {
+  await assertMedicalHistoryPatientAccess(ctx, patientId);
+  const previous = await findLatestMedicalHistoryForPrefill(patientId);
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (!previous) {
+    return {
+      ...emptyMedicalHistoryClinicalDefaults(),
+      title: '',
+      recordedAt: today,
+      prefilledFromId: null as string | null,
+    };
+  }
+
+  return {
+    ...clinicalDefaultsFromHistory(previous),
+    title: '',
+    recordedAt: today,
+    prefilledFromId: previous.id as string | null,
+  };
 }
 
 export async function getMedicalHistory(ctx: ActorContext, patientId: string, id: string) {
@@ -153,26 +180,38 @@ async function extractUploadedMedicalHistory(
       return failed;
     }
 
+    const recordedAt = normalizeExtractedDate(extracted.recordedAt);
+    const previous = await findLatestMedicalHistoryForPrefill(patientId);
+    const merged = mergeClinicalHistoryFromPrevious(
+      {
+        chiefComplaint: extracted.chiefComplaint,
+        personalHistory1: normalizeExtractedDatedItems(extracted.personalHistory1, recordedAt),
+        personalHistory2: normalizeExtractedDatedItems(extracted.personalHistory2, recordedAt),
+        surgicalHistory: normalizeExtractedDatedItems(extracted.surgicalHistory, recordedAt),
+        medications: normalizeExtractedDatedItems(extracted.medications, recordedAt),
+        supplements: normalizeExtractedDatedItems(extracted.supplements, recordedAt),
+        diet: normalizeExtractedDatedItems(extracted.diet, recordedAt),
+        infectiousHistory: extracted.infectiousHistory,
+        traumaticHistory: extracted.traumaticHistory,
+        toxicologicalHistory: normalizeExtractedDatedItems(
+          extracted.toxicologicalHistory,
+          recordedAt,
+        ),
+        allergies: extracted.allergies,
+        vaccines: extracted.vaccines,
+        habits: extracted.habits,
+        gynecoObstetricHistory: extracted.gynecoObstetricHistory,
+        familyHistory: extracted.familyHistory,
+        psychosocialHistory: extracted.psychosocialHistory,
+        notes: extracted.notes,
+      },
+      previous,
+    );
     const updated = await updateMedicalHistoryExtractionState(patientId, id, {
       status: MedicalHistoryStatus.DRAFT,
       title: extracted.title || 'Antecedentes extraídos de PDF',
-      recordedAt: normalizeExtractedDate(extracted.recordedAt),
-      chiefComplaint: extracted.chiefComplaint,
-      personalHistory1: extracted.personalHistory1,
-      personalHistory2: extracted.personalHistory2,
-      surgicalHistory: extracted.surgicalHistory,
-      medications: extracted.medications,
-      supplements: extracted.supplements,
-      infectiousHistory: extracted.infectiousHistory,
-      traumaticHistory: extracted.traumaticHistory,
-      toxicologicalHistory: extracted.toxicologicalHistory,
-      allergies: extracted.allergies,
-      vaccines: extracted.vaccines,
-      habits: extracted.habits,
-      gynecoObstetricHistory: extracted.gynecoObstetricHistory,
-      familyHistory: extracted.familyHistory,
-      psychosocialHistory: extracted.psychosocialHistory,
-      notes: extracted.notes,
+      recordedAt,
+      ...merged,
       extractionModel: extracted.model,
       extractionError: null,
       extractedAt: new Date().toISOString(),
@@ -195,6 +234,33 @@ async function extractUploadedMedicalHistory(
 
 function normalizeExtractedDate(value: string | null) {
   return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date().toISOString().slice(0, 10);
+}
+
+function normalizeExtractedDatedItems(
+  items:
+    | {
+        label: string;
+        detail: string | null;
+        from: string | null;
+        to: string | null;
+      }[]
+    | null
+    | undefined,
+  fallbackFrom: string,
+): DatedHistoryItem[] {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  return items
+    .filter((item) => item.label.trim() !== '')
+    .map((item) => ({
+      label: item.label.trim(),
+      detail: item.detail?.trim() ? item.detail.trim() : null,
+      from:
+        item.from && /^\d{4}-\d{2}-\d{2}$/.test(item.from) ? item.from : fallbackFrom,
+      to: item.to && /^\d{4}-\d{2}-\d{2}$/.test(item.to) ? item.to : null,
+    }));
 }
 
 function extractionErrorMessage(error: unknown) {

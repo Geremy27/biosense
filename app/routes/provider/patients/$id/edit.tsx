@@ -3,6 +3,7 @@ import { Form, redirect, useActionData, useOutletContext } from 'react-router';
 import { PatientForm } from '~/components/patients/patient-form';
 import { SubmitButton } from '~/components/forms/submit-button';
 import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
+import { listActiveNutritionRegions } from '~/db/repositories';
 import {
   deletePatient,
   PatientValidationError,
@@ -13,6 +14,11 @@ import { buildActorContext } from '~/utils/session.server';
 
 import type { PatientOutletContext } from './patient-outlet-context';
 import type { Route } from './+types/edit';
+
+export async function loader() {
+  const nutritionRegions = await listActiveNutritionRegions();
+  return { nutritionRegions };
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -47,7 +53,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-export default function EditPatient() {
+export default function EditPatient({ loaderData }: Route.ComponentProps) {
   const { patient } = useOutletContext<PatientOutletContext>();
   const actionData = useActionData<typeof action>();
 
@@ -63,6 +69,7 @@ export default function EditPatient() {
         submitLabel="Guardar cambios"
         cancelTo={`/provider/patients/${patient.id}`}
         errors={actionData?.errors}
+        nutritionRegions={loaderData.nutritionRegions}
         defaultValues={{
           identificationType: patient.identificationType,
           identificationNumber: patient.identificationNumber,
@@ -73,6 +80,7 @@ export default function EditPatient() {
           birthDate: patient.birthDate,
           birthPlace: patient.birthPlace,
           residencePlace: patient.residencePlace,
+          residenceRegionId: patient.residenceRegionId ?? undefined,
           phone: patient.phone,
           email: patient.email,
           sex: patient.sex,

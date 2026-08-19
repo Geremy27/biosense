@@ -1,3 +1,4 @@
+import { DatedItemsEditor } from '~/components/medical-history/dated-items-editor';
 import { FieldError } from '~/components/forms/field-error';
 import { FormActions } from '~/components/forms/form-actions';
 import { FormField } from '~/components/forms/form-field';
@@ -30,6 +31,9 @@ function TextAreaField({
   defaultValues,
   errors,
 }: TextAreaFieldProps) {
+  const value = defaultValues?.[id];
+  const textValue = typeof value === 'string' ? value : '';
+
   return (
     <FormField id={id} label={label}>
       <textarea
@@ -37,12 +41,25 @@ function TextAreaField({
         name={id}
         rows={rows}
         className="input"
-        defaultValue={defaultValues?.[id] ?? ''}
+        defaultValue={textValue}
         placeholder={placeholder}
       />
       <FieldError message={errors?.[id]} />
     </FormField>
   );
+}
+
+function fieldError(errors: Record<string, string> | undefined, field: string) {
+  if (!errors) {
+    return undefined;
+  }
+
+  if (errors[field]) {
+    return errors[field];
+  }
+
+  const nestedKey = Object.keys(errors).find((key) => key === field || key.startsWith(`${field}.`));
+  return nestedKey ? errors[nestedKey] : undefined;
 }
 
 export function MedicalHistoryForm({
@@ -95,46 +112,60 @@ export function MedicalHistoryForm({
         <h3 className="text-sm font-bold uppercase tracking-wider text-cyan-900">
           Antecedentes personales
         </h3>
+        <p className="text-xs text-slate-500">
+          Los ítems con fechas usan formato desde–hasta. Si dejas &quot;hasta&quot; vacío, se
+          interpreta como hasta la actualidad.
+        </p>
 
-        <TextAreaField
+        <DatedItemsEditor
           id="personalHistory1"
           label="Personales 1 — Diagnósticos dados"
-          placeholder="Diagnósticos confirmados, con fecha o hace cuánto tiempo"
-          rows={3}
-          defaultValues={defaultValues}
-          errors={errors}
+          description="Diagnósticos confirmados"
+          itemLabelPlaceholder="Ej: Hipotiroidismo"
+          detailPlaceholder="Notas, severidad, tratamiento asociado"
+          defaultItems={defaultValues?.personalHistory1}
+          error={fieldError(errors, 'personalHistory1')}
         />
-        <TextAreaField
+        <DatedItemsEditor
           id="personalHistory2"
           label="Personales 2 — Diagnósticos en estudio"
-          placeholder="Diagnósticos que están siendo estudiados actualmente"
-          rows={3}
-          defaultValues={defaultValues}
-          errors={errors}
+          itemLabelPlaceholder="Ej: Sospecha de resistencia a la insulina"
+          detailPlaceholder="Estudios pendientes o hallazgos"
+          defaultItems={defaultValues?.personalHistory2}
+          error={fieldError(errors, 'personalHistory2')}
         />
-        <TextAreaField
+        <DatedItemsEditor
           id="surgicalHistory"
           label="Quirúrgicos"
-          placeholder="Cuál procedimiento y fecha"
-          rows={3}
-          defaultValues={defaultValues}
-          errors={errors}
+          itemLabelPlaceholder="Ej: Apendicectomía"
+          detailPlaceholder="Complicaciones u observaciones"
+          defaultItems={defaultValues?.surgicalHistory}
+          error={fieldError(errors, 'surgicalHistory')}
         />
-        <TextAreaField
+        <DatedItemsEditor
           id="medications"
           label="Medicamentosos"
-          placeholder="Cuáles, cómo (dosis) y fecha de inicio"
-          rows={3}
-          defaultValues={defaultValues}
-          errors={errors}
+          itemLabelPlaceholder="Ej: Levotiroxina"
+          detailPlaceholder="Dosis y frecuencia"
+          defaultItems={defaultValues?.medications}
+          error={fieldError(errors, 'medications')}
         />
-        <TextAreaField
+        <DatedItemsEditor
           id="supplements"
           label="Suplementos"
-          placeholder="Cuáles, cómo (dosis) y fecha de inicio"
-          rows={3}
-          defaultValues={defaultValues}
-          errors={errors}
+          itemLabelPlaceholder="Ej: Vitamina D3"
+          detailPlaceholder="Dosis y frecuencia"
+          defaultItems={defaultValues?.supplements}
+          error={fieldError(errors, 'supplements')}
+        />
+        <DatedItemsEditor
+          id="diet"
+          label="Alimentación / dieta"
+          description="Patrones o dietas relevantes (antiinflamatoria, ayuno, restricciones, etc.)"
+          itemLabelPlaceholder="Ej: Dieta antiinflamatoria"
+          detailPlaceholder="Qué incluye / excluye"
+          defaultItems={defaultValues?.diet}
+          error={fieldError(errors, 'diet')}
         />
         <TextAreaField
           id="infectiousHistory"
@@ -152,13 +183,13 @@ export function MedicalHistoryForm({
           defaultValues={defaultValues}
           errors={errors}
         />
-        <TextAreaField
+        <DatedItemsEditor
           id="toxicologicalHistory"
           label="Toxicológicos"
-          placeholder="Fuma o toma: cantidad y frecuencia"
-          rows={2}
-          defaultValues={defaultValues}
-          errors={errors}
+          itemLabelPlaceholder="Ej: Alcohol, tabaco"
+          detailPlaceholder="Cantidad y frecuencia"
+          defaultItems={defaultValues?.toxicologicalHistory}
+          error={fieldError(errors, 'toxicologicalHistory')}
         />
         <TextAreaField
           id="allergies"

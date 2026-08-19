@@ -109,6 +109,7 @@ export async function updatePatient(
       | 'birthDate'
       | 'birthPlace'
       | 'residencePlace'
+      | 'residenceRegionId'
       | 'phone'
       | 'email'
       | 'sex'

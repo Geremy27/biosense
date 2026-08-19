@@ -2,6 +2,7 @@ import { date, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-or
 
 import { LabReportStatus, labReportStatus } from './enums';
 import { organizations } from './organizations';
+import { patientMedicalHistories } from './patient-medical-histories';
 import { patients } from './patients';
 import { providers } from './providers';
 import { users } from './users';
@@ -19,6 +20,8 @@ export const labReports = pgTable(
     uploadedByProviderId: uuid('uploaded_by_provider_id')
       .references(() => providers.id)
       .notNull(),
+    // Required for new uploads in the app; nullable so legacy rows remain valid.
+    medicalHistoryId: uuid('medical_history_id').references(() => patientMedicalHistories.id),
 
     originalFilename: text('original_filename').notNull(),
     mimeType: text('mime_type').notNull(),
@@ -47,5 +50,6 @@ export const labReports = pgTable(
     index('lab_reports_patient_idx').on(table.patientId),
     index('lab_reports_organization_idx').on(table.organizationId),
     index('lab_reports_patient_status_idx').on(table.patientId, table.status),
+    index('lab_reports_medical_history_idx').on(table.medicalHistoryId),
   ],
 );

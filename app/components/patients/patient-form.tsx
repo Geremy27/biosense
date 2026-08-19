@@ -7,15 +7,27 @@ import { FormPendingFieldset } from '~/components/forms/form-pending-fieldset';
 import type { PatientInput } from '~/validation/patients';
 import { IDENTIFICATION_TYPE_OPTIONS, SEX_OPTIONS } from '~/utils/patient-display';
 
+type NutritionRegionOption = {
+  id: string;
+  name: string;
+};
+
 type PatientFormProps = {
   defaultValues?: Partial<PatientInput>;
   errors?: Record<string, string>;
   submitLabel: string;
   cancelTo: string;
+  nutritionRegions: NutritionRegionOption[];
 };
 
 // Renders the shared patient create/edit form fields.
-export function PatientForm({ defaultValues, errors, submitLabel, cancelTo }: PatientFormProps) {
+export function PatientForm({
+  defaultValues,
+  errors,
+  submitLabel,
+  cancelTo,
+  nutritionRegions,
+}: PatientFormProps) {
   return (
     <Form method="post" className="card space-y-8">
       <FormPendingFieldset className="space-y-8" excludeIntent="delete">
@@ -147,7 +159,25 @@ export function PatientForm({ defaultValues, errors, submitLabel, cancelTo }: Pa
             <FieldError message={errors?.birthPlace} />
           </FormField>
 
-          <FormField id="residencePlace" label="Lugar de residencia">
+          <FormField id="residenceRegionId" label="Ciudad / región (nutrición local)">
+            <select
+              id="residenceRegionId"
+              name="residenceRegionId"
+              className="input"
+              required
+              defaultValue={defaultValues?.residenceRegionId ?? ''}
+            >
+              <option value="">Selecciona una ciudad o región</option>
+              {nutritionRegions.map((region) => (
+                <option key={region.id} value={region.id}>
+                  {region.name}
+                </option>
+              ))}
+            </select>
+            <FieldError message={errors?.residenceRegionId} />
+          </FormField>
+
+          <FormField id="residencePlace" label="Detalle de residencia">
             <input
               id="residencePlace"
               name="residencePlace"
@@ -155,6 +185,7 @@ export function PatientForm({ defaultValues, errors, submitLabel, cancelTo }: Pa
               required
               defaultValue={defaultValues?.residencePlace ?? ''}
               className="input"
+              placeholder="Barrio, municipio u otra precisión"
             />
             <FieldError message={errors?.residencePlace} />
           </FormField>

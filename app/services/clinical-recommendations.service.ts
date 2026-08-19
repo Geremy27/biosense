@@ -1,4 +1,5 @@
 import { AuditAction, ClinicalRecommendationStatus, LabReportStatus, Sex } from '~/db/models/enums';
+import type { MedicalHistoryDatedItem } from '~/db/models/patient-medical-histories';
 import {
   confirmClinicalRecommendationRow,
   findClinicalRecommendationByPatientAndId,
@@ -6,14 +7,17 @@ import {
   findLabAnalytesByReportId,
   findLabReportByPatientAndId,
   findMedicalHistoryByPatientAndId,
+  findNutritionRegionById,
   findPatientById,
   insertClinicalRecommendation,
+  listActiveLocalProductsByRegionId,
   unlockClinicalRecommendationRow,
   updateClinicalRecommendation,
   updateClinicalRecommendationOutput,
   updateClinicalRecommendationShareSections,
 } from '~/db/repositories';
 import { formatSex } from '~/utils/patient-display';
+import { formatDatedHistoryItems } from '~/validation/medical-history';
 import {
   asRecommendationOutput,
   parseGenerateRecommendationFormData,
@@ -46,6 +50,15 @@ export type DeidentifiedPatientSnapshot = {
   heightCm: string | null;
   weightKg: string | null;
   bmi: number | null;
+  residencePlace: string | null;
+  residenceRegion: string | null;
+};
+
+export type LocalFoodSnapshot = {
+  name: string;
+  role: string;
+  nutrients: string[];
+  notes: string | null;
 };
 
 export type LabSnapshot = {
@@ -66,14 +79,15 @@ export type MedicalHistorySnapshot = {
   title: string;
   recordedAt: string;
   chiefComplaint: string | null;
-  personalHistory1: string | null;
-  personalHistory2: string | null;
-  surgicalHistory: string | null;
-  medications: string | null;
-  supplements: string | null;
+  personalHistory1: MedicalHistoryDatedItem[];
+  personalHistory2: MedicalHistoryDatedItem[];
+  surgicalHistory: MedicalHistoryDatedItem[];
+  medications: MedicalHistoryDatedItem[];
+  supplements: MedicalHistoryDatedItem[];
+  diet: MedicalHistoryDatedItem[];
   infectiousHistory: string | null;
   traumaticHistory: string | null;
-  toxicologicalHistory: string | null;
+  toxicologicalHistory: MedicalHistoryDatedItem[];
   allergies: string | null;
   vaccines: string | null;
   habits: string | null;
@@ -160,14 +174,15 @@ export async function generateClinicalRecommendation(
       title: medicalHistory.title,
       recordedAt: medicalHistory.recordedAt,
       chiefComplaint: medicalHistory.chiefComplaint,
-      personalHistory1: medicalHistory.personalHistory1,
-      personalHistory2: medicalHistory.personalHistory2,
-      surgicalHistory: medicalHistory.surgicalHistory,
-      medications: medicalHistory.medications,
-      supplements: medicalHistory.supplements,
+      personalHistory1: medicalHistory.personalHistory1 ?? [],
+      personalHistory2: medicalHistory.personalHistory2 ?? [],
+      surgicalHistory: medicalHistory.surgicalHistory ?? [],
+      medications: medicalHistory.medications ?? [],
+      supplements: medicalHistory.supplements ?? [],
+      diet: medicalHistory.diet ?? [],
       infectiousHistory: medicalHistory.infectiousHistory,
       traumaticHistory: medicalHistory.traumaticHistory,
-      toxicologicalHistory: medicalHistory.toxicologicalHistory,
+      toxicologicalHistory: medicalHistory.toxicologicalHistory ?? [],
       allergies: medicalHistory.allergies,
       vaccines: medicalHistory.vaccines,
       habits: medicalHistory.habits,
@@ -178,7 +193,14 @@ export async function generateClinicalRecommendation(
     };
   }
 
-  const patientSnapshot = buildPatientSnapshot(patient);
+  const residenceRegion = patient.residenceRegionId
+    ? await findNutritionRegionById(patient.residenceRegionId)
+    : null;
+  const localFoods: LocalFoodSnapshot[] = patient.residenceRegionId
+    ? await listActiveLocalProductsByRegionId(patient.residenceRegionId)
+    : [];
+
+  const patientSnapshot = buildPatientSnapshot(patient, residenceRegion?.name ?? null);
   const labSnapshot: LabSnapshot = {
     collectedAt: labReport.collectedAt,
     labName: labReport.labName,
@@ -194,7 +216,10 @@ export async function generateClinicalRecommendation(
   };
 
   const medicationsAndSupplementsText =
-    [medicalHistorySnapshot?.medications, medicalHistorySnapshot?.supplements]
+    [
+      formatDatedHistoryItems(medicalHistorySnapshot?.medications),
+      formatDatedHistoryItems(medicalHistorySnapshot?.supplements),
+    ]
       .filter((value): value is string => Boolean(value))
       .join('\n') || null;
   const medicationsText = input.medicationsText ?? medicationsAndSupplementsText;
@@ -205,6 +230,7 @@ export async function generateClinicalRecommendation(
     labSnapshot,
     medicalHistorySnapshot,
     medicationsText,
+    localFoods,
     instructions: input.instructions,
   });
 
@@ -503,13 +529,17 @@ async function assertRecommendationPatientAccess(ctx: ActorContext, patientId: s
   return patient;
 }
 
-function buildPatientSnapshot(patient: {
-  birthDate: string;
-  sex: Sex | null;
-  ethnicity: string | null;
-  heightCm: string | null;
-  weightKg: string | null;
-}): DeidentifiedPatientSnapshot {
+function buildPatientSnapshot(
+  patient: {
+    birthDate: string;
+    sex: Sex | null;
+    ethnicity: string | null;
+    heightCm: string | null;
+    weightKg: string | null;
+    residencePlace: string;
+  },
+  residenceRegion: string | null,
+): DeidentifiedPatientSnapshot {
   const ageYears = calculateAgeYears(patient.birthDate);
   const heightCm = patient.heightCm ? Number(patient.heightCm) : null;
   const weightKg = patient.weightKg ? Number(patient.weightKg) : null;
@@ -525,6 +555,8 @@ function buildPatientSnapshot(patient: {
     heightCm: patient.heightCm,
     weightKg: patient.weightKg,
     bmi,
+    residencePlace: patient.residencePlace,
+    residenceRegion,
   };
 }
 
@@ -546,12 +578,14 @@ function buildClinicalUserPrompt({
   labSnapshot,
   medicalHistorySnapshot,
   medicationsText,
+  localFoods,
   instructions,
 }: {
   patientSnapshot: DeidentifiedPatientSnapshot;
   labSnapshot: LabSnapshot;
   medicalHistorySnapshot: MedicalHistorySnapshot | null;
   medicationsText: string | null;
+  localFoods: LocalFoodSnapshot[];
   instructions: string;
 }) {
   const sections = [
@@ -567,6 +601,11 @@ function buildClinicalUserPrompt({
     '',
     '### Medicación y suplementos actuales',
     medicationsText ?? 'Ninguna reportada',
+    '',
+    '### Alimentos locales recomendables (catálogo por ciudad/región)',
+    localFoods.length > 0
+      ? JSON.stringify(localFoods, null, 2)
+      : 'Sin catálogo local: falta residenceRegion del paciente. Usa alimentos colombianos generales y márcalo en missingInformation.',
     '',
     '### Laboratorio base (panel confirmado)',
     `Fecha de toma: ${labSnapshot.collectedAt ?? 'No indicada'}`,

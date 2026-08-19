@@ -1,9 +1,11 @@
-import { AuditAction, LabReportStatus } from '~/db/models/enums';
+import { AuditAction, LabReportStatus, MedicalHistoryStatus } from '~/db/models/enums';
 import {
   confirmLabReportWithAnalytes,
   findLabAnalytesByReportId,
   findLabReportByPatientAndId,
   findLabReportsByPatientId,
+  findMedicalHistoriesByPatientId,
+  findMedicalHistoryByPatientAndId,
   findPatientById,
   insertLabReport,
   replaceLabAnalytes,
@@ -50,6 +52,10 @@ export async function getLabReport(ctx: ActorContext, patientId: string, reportI
   await assertLabPatientAccess(ctx, patientId);
   const report = await findLabReportByPatientAndId(patientId, reportId);
   const analytes = report ? await findLabAnalytesByReportId(report.id) : [];
+  const medicalHistory =
+    report?.medicalHistoryId
+      ? await findMedicalHistoryByPatientAndId(patientId, report.medicalHistoryId)
+      : null;
 
   await record(ctx, {
     action: AuditAction.VIEW,
@@ -59,16 +65,50 @@ export async function getLabReport(ctx: ActorContext, patientId: string, reportI
     metadata: { found: report !== null },
   });
 
-  return report ? { report, analytes } : null;
+  return report ? { report, analytes, medicalHistory } : null;
+}
+
+export async function listLabUploadMedicalHistories(ctx: ActorContext, patientId: string) {
+  await assertLabPatientAccess(ctx, patientId);
+  const rows = await findMedicalHistoriesByPatientId(patientId);
+
+  return rows.filter(
+    (row) =>
+      row.status === MedicalHistoryStatus.DRAFT || row.status === MedicalHistoryStatus.CONFIRMED,
+  );
 }
 
 export async function uploadAndExtractLabReport(
   ctx: ActorContext,
   patientId: string,
   value: FormDataEntryValue | null,
+  medicalHistoryId: string,
 ) {
   assertProvider(ctx);
   const patient = await assertLabPatientAccess(ctx, patientId);
+
+  if (!medicalHistoryId) {
+    throw new LabReportValidationError({
+      medicalHistoryId: 'Debes asociar el examen a un historial médico.',
+    });
+  }
+
+  const medicalHistory = await findMedicalHistoryByPatientAndId(patientId, medicalHistoryId);
+  if (!medicalHistory) {
+    throw new LabReportValidationError({
+      medicalHistoryId: 'Historial médico no encontrado para este paciente.',
+    });
+  }
+
+  if (
+    medicalHistory.status !== MedicalHistoryStatus.DRAFT &&
+    medicalHistory.status !== MedicalHistoryStatus.CONFIRMED
+  ) {
+    throw new LabReportValidationError({
+      medicalHistoryId: 'Selecciona un historial médico listo (borrador o confirmado).',
+    });
+  }
+
   const file = validatePdf(value);
   const bytes = Buffer.from(await file.arrayBuffer());
   assertPdfSignature(bytes);
@@ -79,6 +119,7 @@ export async function uploadAndExtractLabReport(
     patientId,
     organizationId: patient.organizationId,
     uploadedByProviderId: ctx.providerId,
+    medicalHistoryId,
     originalFilename: file.name || 'laboratorio.pdf',
     mimeType: 'application/pdf',
     fileSizeBytes: file.size,

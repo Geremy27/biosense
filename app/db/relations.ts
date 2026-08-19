@@ -5,6 +5,7 @@ import { account, session } from './models/auth';
 import { clinicalRecommendations } from './models/clinical-recommendations';
 import { labAnalytes } from './models/lab-analytes';
 import { labReports } from './models/lab-reports';
+import { nutritionLocalProducts, nutritionRegions } from './models/nutrition-regions';
 import { organizations } from './models/organizations';
 import { patientMedicalHistories } from './models/patient-medical-histories';
 import { patients } from './models/patients';
@@ -71,6 +72,10 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
     fields: [patients.primaryProviderId],
     references: [providers.id],
   }),
+  residenceRegion: one(nutritionRegions, {
+    fields: [patients.residenceRegionId],
+    references: [nutritionRegions.id],
+  }),
   auditLogs: many(auditLogs),
   labReports: many(labReports),
   labAnalytes: many(labAnalytes),
@@ -78,7 +83,19 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   medicalHistories: many(patientMedicalHistories),
 }));
 
-export const patientMedicalHistoriesRelations = relations(patientMedicalHistories, ({ one }) => ({
+export const nutritionRegionsRelations = relations(nutritionRegions, ({ many }) => ({
+  localProducts: many(nutritionLocalProducts),
+  patients: many(patients),
+}));
+
+export const nutritionLocalProductsRelations = relations(nutritionLocalProducts, ({ one }) => ({
+  region: one(nutritionRegions, {
+    fields: [nutritionLocalProducts.regionId],
+    references: [nutritionRegions.id],
+  }),
+}));
+
+export const patientMedicalHistoriesRelations = relations(patientMedicalHistories, ({ one, many }) => ({
   patient: one(patients, {
     fields: [patientMedicalHistories.patientId],
     references: [patients.id],
@@ -91,6 +108,7 @@ export const patientMedicalHistoriesRelations = relations(patientMedicalHistorie
     fields: [patientMedicalHistories.createdByUserId],
     references: [users.id],
   }),
+  labReports: many(labReports),
 }));
 
 export const labReportsRelations = relations(labReports, ({ one, many }) => ({
@@ -109,6 +127,10 @@ export const labReportsRelations = relations(labReports, ({ one, many }) => ({
   confirmedByUser: one(users, {
     fields: [labReports.confirmedByUserId],
     references: [users.id],
+  }),
+  medicalHistory: one(patientMedicalHistories, {
+    fields: [labReports.medicalHistoryId],
+    references: [patientMedicalHistories.id],
   }),
   analytes: many(labAnalytes),
   clinicalRecommendations: many(clinicalRecommendations),

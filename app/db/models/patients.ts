@@ -1,6 +1,7 @@
 import { date, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 import { identificationType, sex } from './enums';
+import { nutritionRegions } from './nutrition-regions';
 import { organizations } from './organizations';
 import { providers } from './providers';
 
@@ -27,6 +28,8 @@ export const patients = pgTable(
     birthDate: date('birth_date', { mode: 'string' }).notNull(),
     birthPlace: text('birth_place').notNull(),
     residencePlace: text('residence_place').notNull(),
+    // Catalog region used for local nutrition product recommendations.
+    residenceRegionId: uuid('residence_region_id').references(() => nutritionRegions.id),
 
     phone: text('phone').notNull(),
     email: text('email'),

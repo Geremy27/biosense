@@ -58,6 +58,7 @@ export const patientInputSchema = z.object({
     ),
   birthPlace: z.string().trim().min(1, 'El lugar de nacimiento es obligatorio.'),
   residencePlace: z.string().trim().min(1, 'El lugar de residencia es obligatorio.'),
+  residenceRegionId: z.string().uuid({ message: 'Selecciona una ciudad/región de residencia.' }),
   phone: z.string().trim().min(7, 'El teléfono es obligatorio.'),
   email: z
     .string()
@@ -92,6 +93,7 @@ export function parsePatientFormData(formData: FormData) {
     birthDate: String(formData.get('birthDate') ?? ''),
     birthPlace: String(formData.get('birthPlace') ?? ''),
     residencePlace: String(formData.get('residencePlace') ?? ''),
+    residenceRegionId: String(formData.get('residenceRegionId') ?? ''),
     phone: String(formData.get('phone') ?? ''),
     email: String(formData.get('email') ?? ''),
     sex: String(formData.get('sex') ?? ''),

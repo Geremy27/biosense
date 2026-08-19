@@ -3,6 +3,7 @@ import { Form, Link, redirect, useActionData, useOutletContext } from 'react-rou
 import { MedicalHistoryForm } from '~/components/medical-history/medical-history-form';
 import {
   createMedicalHistory,
+  getMedicalHistoryPrefillDefaults,
   MedicalHistoryValidationError,
   validateMedicalHistoryFormData,
 } from '~/services/patient-medical-histories.service';
@@ -10,6 +11,12 @@ import { buildActorContext } from '~/utils/session.server';
 
 import type { PatientOutletContext } from '../patient-outlet-context';
 import type { Route } from './+types/new';
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const ctx = await buildActorContext(request);
+  const defaults = await getMedicalHistoryPrefillDefaults(ctx, params.id);
+  return { defaults };
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -28,9 +35,10 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-export default function NewMedicalHistory() {
+export default function NewMedicalHistory({ loaderData }: Route.ComponentProps) {
   const { patient } = useOutletContext<PatientOutletContext>();
   const actionData = useActionData<typeof action>();
+  const { defaults } = loaderData;
 
   return (
     <div className="space-y-6">
@@ -45,6 +53,12 @@ export default function NewMedicalHistory() {
         <p className="mt-2 text-sm text-slate-500">
           Captura historia clínica, hábitos y medicación para usarla en recomendaciones.
         </p>
+        {defaults.prefilledFromId ? (
+          <p className="mt-2 rounded-lg border border-cyan-100 bg-cyan-50 px-3 py-2 text-sm text-cyan-900">
+            Se prellenó con el historial anterior. Revisa y actualiza fechas o ítems que hayan
+            cambiado.
+          </p>
+        ) : null}
       </div>
 
       <Form method="post" className="card space-y-6">
@@ -52,6 +66,7 @@ export default function NewMedicalHistory() {
           submitLabel="Guardar antecedentes"
           cancelTo={`/provider/patients/${patient.id}/medical-histories`}
           errors={actionData?.errors}
+          defaultValues={defaults}
           patientSex={patient.sex}
         />
       </Form>

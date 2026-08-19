@@ -4,6 +4,7 @@ import { pageTitle } from '~/brand';
 import { PatientForm } from '~/components/patients/patient-form';
 import { Breadcrumbs } from '~/components/ui/breadcrumbs';
 import { PageHeader } from '~/components/ui/page-header';
+import { listActiveNutritionRegions } from '~/db/repositories';
 import {
   createPatient,
   PatientValidationError,
@@ -12,6 +13,11 @@ import {
 import { buildActorContext } from '~/utils/session.server';
 
 import type { Route } from './+types/new';
+
+export async function loader() {
+  const nutritionRegions = await listActiveNutritionRegions();
+  return { nutritionRegions };
+}
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -34,7 +40,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: pageTitle('Nuevo paciente') }];
 }
 
-export default function NewPatient() {
+export default function NewPatient({ loaderData }: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
 
   return (
@@ -53,6 +59,7 @@ export default function NewPatient() {
           submitLabel="Crear paciente"
           cancelTo="/provider/patients"
           errors={actionData?.errors}
+          nutritionRegions={loaderData.nutritionRegions}
         />
       </div>
     </div>

@@ -50,6 +50,13 @@
       "when": 1785720849903,
       "tag": "0006_clinical_recommendation_share_sections",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786530000000,
+      "tag": "0007_medical_history_exams_nutrition",
+      "breakpoints": true
     }
   ]
 }

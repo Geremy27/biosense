@@ -51,7 +51,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function LabReportDetail({ loaderData, actionData }: Route.ComponentProps) {
   const { patient } = useOutletContext<PatientOutletContext>();
-  const { report, analytes } = loaderData;
+  const { report, analytes, medicalHistory } = loaderData;
 
   return (
     <div className="space-y-6">
@@ -67,6 +67,17 @@ export default function LabReportDetail({ loaderData, actionData }: Route.Compon
             {report.panelName || report.labName || report.originalFilename}
           </h2>
           <p className="mt-1 text-sm text-slate-500">{report.originalFilename}</p>
+          {medicalHistory ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Historial asociado:{' '}
+              <Link
+                to={`/provider/patients/${patient.id}/medical-histories/${medicalHistory.id}`}
+                className="font-semibold text-cyan-600 hover:text-cyan-800"
+              >
+                {medicalHistory.title}
+              </Link>
+            </p>
+          ) : null}
         </div>
         <StatusBadge
           label={formatLabReportStatus(report.status)}

@@ -18,10 +18,6 @@ type RecommendationEditFormProps = {
   errors?: Record<string, string>;
 };
 
-function capitalize(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
 const EMPTY_CONCLUSION: ConclusionDraft = { statement: '', rationale: '' };
 const EMPTY_RECOMMENDATION: RecommendationDraft = { action: '', rationale: '' };
 const EMPTY_SUPPLEMENT: SupplementDraft = {
@@ -31,6 +27,15 @@ const EMPTY_SUPPLEMENT: SupplementDraft = {
   requiresMoreLabs: false,
   missingLabs: null,
 };
+const EMPTY_NUTRIENT_SOURCE = {
+  nutrient: '',
+  amount: null as string | null,
+  foods: [] as string[],
+  localProducts: [] as string[],
+};
+const EMPTY_PRACTICE = { what: '', howToKnow: '' };
+
+type NutritionBlock = RecommendationOutput['lifestyle']['nutrition']['macros'];
 
 export function RecommendationEditForm({
   output,
@@ -50,6 +55,7 @@ export function RecommendationEditForm({
       <input type="hidden" name="conclusionsJson" value={JSON.stringify(conclusions)} />
       <input type="hidden" name="recommendationsJson" value={JSON.stringify(recommendations)} />
       <input type="hidden" name="possibleSupplementsJson" value={JSON.stringify(supplements)} />
+      <input type="hidden" name="lifestyleJson" value={JSON.stringify(lifestyle)} />
 
       <FormPendingFieldset intent="save-edit" className="space-y-6">
         <section className="card space-y-4">
@@ -233,6 +239,201 @@ export function RecommendationEditForm({
             <div key={key} className="rounded-lg border border-slate-200 p-4">
               <p className="font-semibold text-cyan-900">{label}</p>
 
+              {key === 'nutrition' ? (
+                <>
+                  <FormField id="lifestyle-nutrition-diet-type" label="Tipo de dieta">
+                    <input
+                      id="lifestyle-nutrition-diet-type"
+                      className="input mt-3"
+                      value={lifestyle.nutrition.dietType ?? ''}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          nutrition: {
+                            ...current.nutrition,
+                            dietType: event.target.value === '' ? null : event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <NutritionBlockEditor
+                    idPrefix="macros"
+                    title="Macros — de dónde obtenerlos"
+                    block={lifestyle.nutrition.macros}
+                    onChange={(macros) =>
+                      setLifestyle((current) => ({
+                        ...current,
+                        nutrition: { ...current.nutrition, macros },
+                      }))
+                    }
+                  />
+                  <NutritionBlockEditor
+                    idPrefix="micros"
+                    title="Micros — de dónde obtenerlos"
+                    block={lifestyle.nutrition.micros}
+                    onChange={(micros) =>
+                      setLifestyle((current) => ({
+                        ...current,
+                        nutrition: { ...current.nutrition, micros },
+                      }))
+                    }
+                  />
+                </>
+              ) : null}
+
+              {key === 'exercise' ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <FormField id="lifestyle-exercise-type" label="Tipo">
+                    <input
+                      id="lifestyle-exercise-type"
+                      className="input"
+                      value={lifestyle.exercise.type}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          exercise: { ...current.exercise, type: event.target.value },
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField id="lifestyle-exercise-duration" label="Duración">
+                    <input
+                      id="lifestyle-exercise-duration"
+                      className="input"
+                      value={lifestyle.exercise.duration}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          exercise: { ...current.exercise, duration: event.target.value },
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField id="lifestyle-exercise-intensity" label="Intensidad">
+                    <input
+                      id="lifestyle-exercise-intensity"
+                      className="input"
+                      value={lifestyle.exercise.intensity}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          exercise: { ...current.exercise, intensity: event.target.value },
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField
+                    id="lifestyle-exercise-intensity-explanation"
+                    label="Qué significa esa intensidad"
+                  >
+                    <input
+                      id="lifestyle-exercise-intensity-explanation"
+                      className="input"
+                      value={lifestyle.exercise.intensityExplanation}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          exercise: {
+                            ...current.exercise,
+                            intensityExplanation: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </FormField>
+                </div>
+              ) : null}
+
+              {key === 'mentalAndSleep' ? (
+                <div className="mt-3 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-slate-700">Prácticas concretas</p>
+                    <button
+                      type="button"
+                      className="btn-ghost gap-2"
+                      onClick={() =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          mentalAndSleep: {
+                            ...current.mentalAndSleep,
+                            practices: [...current.mentalAndSleep.practices, { ...EMPTY_PRACTICE }],
+                          },
+                        }))
+                      }
+                    >
+                      <Plus className="size-4" aria-hidden />
+                      Agregar práctica
+                    </button>
+                  </div>
+                  {lifestyle.mentalAndSleep.practices.length === 0 ? (
+                    <p className="text-sm text-slate-500">Sin prácticas todavía.</p>
+                  ) : (
+                    lifestyle.mentalAndSleep.practices.map((practice, index) => (
+                      <div key={index} className="space-y-2 rounded-lg border border-slate-200 p-3">
+                        <FormField id={`mental-practice-${index}-what`} label="Qué hacer">
+                          <input
+                            id={`mental-practice-${index}-what`}
+                            className="input"
+                            value={practice.what}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                mentalAndSleep: {
+                                  ...current.mentalAndSleep,
+                                  practices: current.mentalAndSleep.practices.map((row, i) =>
+                                    i === index ? { ...row, what: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <FormField
+                          id={`mental-practice-${index}-how`}
+                          label="Cómo saber que se está haciendo bien"
+                        >
+                          <input
+                            id={`mental-practice-${index}-how`}
+                            className="input"
+                            value={practice.howToKnow}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                mentalAndSleep: {
+                                  ...current.mentalAndSleep,
+                                  practices: current.mentalAndSleep.practices.map((row, i) =>
+                                    i === index ? { ...row, howToKnow: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                          onClick={() =>
+                            setLifestyle((current) => ({
+                              ...current,
+                              mentalAndSleep: {
+                                ...current.mentalAndSleep,
+                                practices: current.mentalAndSleep.practices.filter(
+                                  (_, i) => i !== index,
+                                ),
+                              },
+                            }))
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Quitar
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : null}
+
               <FormField id={`lifestyle-${key}-keynumbers`} label="Datos rápidos (cuadrito visual)">
                 <div className="space-y-2">
                   {lifestyle[key].keyNumbers.map((item, index) => (
@@ -353,22 +554,6 @@ export function RecommendationEditForm({
               </FormField>
             </div>
           ))}
-          {(['nutrition', 'exercise', 'mentalAndSleep'] as const).map((key) => (
-            <span key={key}>
-              <input type="hidden" name={`lifestyle${capitalize(key)}Guidance`} value={lifestyle[key].guidance} />
-              <input type="hidden" name={`lifestyle${capitalize(key)}Rationale`} value={lifestyle[key].rationale} />
-              <input
-                type="hidden"
-                name={`lifestyle${capitalize(key)}PatientSummary`}
-                value={lifestyle[key].patientSummary}
-              />
-              <input
-                type="hidden"
-                name={`lifestyle${capitalize(key)}KeyNumbersJson`}
-                value={JSON.stringify(lifestyle[key].keyNumbers)}
-              />
-            </span>
-          ))}
         </section>
 
         <section className="card space-y-4">
@@ -477,5 +662,135 @@ export function RecommendationEditForm({
         </div>
       </FormPendingFieldset>
     </Form>
+  );
+}
+
+function splitCommaList(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function NutritionBlockEditor({
+  idPrefix,
+  title,
+  block,
+  onChange,
+}: {
+  idPrefix: string;
+  title: string;
+  block: NutritionBlock;
+  onChange: (block: NutritionBlock) => void;
+}) {
+  return (
+    <div className="mt-3 space-y-3">
+      <FormField id={`${idPrefix}-targets`} label={title}>
+        <textarea
+          id={`${idPrefix}-targets`}
+          className="input mt-3"
+          rows={2}
+          placeholder="Metas (gramos, %, frecuencia)"
+          value={block.targets}
+          onChange={(event) => onChange({ ...block, targets: event.target.value })}
+        />
+      </FormField>
+      {block.sources.map((source, index) => (
+        <div key={index} className="grid gap-2 rounded-lg border border-slate-200 p-3">
+          <FormField id={`${idPrefix}-source-${index}-nutrient`} label="Nutriente">
+            <input
+              id={`${idPrefix}-source-${index}-nutrient`}
+              className="input"
+              placeholder="Ej: Proteína"
+              value={source.nutrient}
+              onChange={(event) =>
+                onChange({
+                  ...block,
+                  sources: block.sources.map((row, i) =>
+                    i === index ? { ...row, nutrient: event.target.value } : row,
+                  ),
+                })
+              }
+            />
+          </FormField>
+          <FormField id={`${idPrefix}-source-${index}-amount`} label="Cantidad">
+            <input
+              id={`${idPrefix}-source-${index}-amount`}
+              className="input"
+              placeholder="Ej: 120 g/día"
+              value={source.amount ?? ''}
+              onChange={(event) =>
+                onChange({
+                  ...block,
+                  sources: block.sources.map((row, i) =>
+                    i === index
+                      ? { ...row, amount: event.target.value === '' ? null : event.target.value }
+                      : row,
+                  ),
+                })
+              }
+            />
+          </FormField>
+          <FormField id={`${idPrefix}-source-${index}-foods`} label="Alimentos (separados por coma)">
+            <input
+              id={`${idPrefix}-source-${index}-foods`}
+              className="input"
+              placeholder="Huevo, pollo, lentejas"
+              value={source.foods.join(', ')}
+              onChange={(event) =>
+                onChange({
+                  ...block,
+                  sources: block.sources.map((row, i) =>
+                    i === index ? { ...row, foods: splitCommaList(event.target.value) } : row,
+                  ),
+                })
+              }
+            />
+          </FormField>
+          <FormField
+            id={`${idPrefix}-source-${index}-local`}
+            label="Productos locales (separados por coma)"
+          >
+            <input
+              id={`${idPrefix}-source-${index}-local`}
+              className="input"
+              placeholder="Quinua, uchuva"
+              value={source.localProducts.join(', ')}
+              onChange={(event) =>
+                onChange({
+                  ...block,
+                  sources: block.sources.map((row, i) =>
+                    i === index
+                      ? { ...row, localProducts: splitCommaList(event.target.value) }
+                      : row,
+                  ),
+                })
+              }
+            />
+          </FormField>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"
+            onClick={() =>
+              onChange({
+                ...block,
+                sources: block.sources.filter((_, i) => i !== index),
+              })
+            }
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Quitar fuente
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="btn-ghost gap-2"
+        onClick={() => onChange({ ...block, sources: [...block.sources, { ...EMPTY_NUTRIENT_SOURCE }] })}
+      >
+        <Plus className="size-4" aria-hidden />
+        Agregar fuente
+      </button>
+    </div>
   );
 }

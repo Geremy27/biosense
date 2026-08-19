@@ -16,6 +16,7 @@ const EDITABLE_FIELDS = [
   'surgicalHistory',
   'medications',
   'supplements',
+  'diet',
   'infectiousHistory',
   'traumaticHistory',
   'toxicologicalHistory',
@@ -39,6 +40,41 @@ export async function findMedicalHistoriesByPatientId(patientId: string) {
       ),
     )
     .orderBy(desc(patientMedicalHistories.recordedAt), desc(patientMedicalHistories.createdAt));
+}
+
+/** Latest confirmed history, else latest draft/any non-deleted by recordedAt. */
+export async function findLatestMedicalHistoryForPrefill(patientId: string) {
+  const [confirmed] = await db
+    .select()
+    .from(patientMedicalHistories)
+    .where(
+      and(
+        eq(patientMedicalHistories.patientId, patientId),
+        eq(patientMedicalHistories.status, MedicalHistoryStatus.CONFIRMED),
+        isNull(patientMedicalHistories.deletedAt),
+      ),
+    )
+    .orderBy(desc(patientMedicalHistories.recordedAt), desc(patientMedicalHistories.createdAt))
+    .limit(1);
+
+  if (confirmed) {
+    return confirmed;
+  }
+
+  const [latest] = await db
+    .select()
+    .from(patientMedicalHistories)
+    .where(
+      and(
+        eq(patientMedicalHistories.patientId, patientId),
+        isNull(patientMedicalHistories.deletedAt),
+        ne(patientMedicalHistories.status, MedicalHistoryStatus.EXTRACTING),
+      ),
+    )
+    .orderBy(desc(patientMedicalHistories.recordedAt), desc(patientMedicalHistories.createdAt))
+    .limit(1);
+
+  return latest ?? null;
 }
 
 export async function findMedicalHistoryByPatientAndId(patientId: string, id: string) {
@@ -108,6 +144,7 @@ export async function updateMedicalHistoryExtractionState(
       | 'surgicalHistory'
       | 'medications'
       | 'supplements'
+      | 'diet'
       | 'infectiousHistory'
       | 'traumaticHistory'
       | 'toxicologicalHistory'

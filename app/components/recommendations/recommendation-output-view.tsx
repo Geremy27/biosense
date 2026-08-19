@@ -191,18 +191,21 @@ export function RecommendationOutputView({
               icon={Utensils}
               item={output.lifestyle.nutrition}
               audience={audience}
+              details={<NutritionDetails nutrition={output.lifestyle.nutrition} />}
             />
             <LifestyleCard
               title="2. Ejercicio"
               icon={Dumbbell}
               item={output.lifestyle.exercise}
               audience={audience}
+              details={<ExerciseDetails exercise={output.lifestyle.exercise} />}
             />
             <LifestyleCard
               title="3. Mental y sueño"
               icon={Brain}
               item={output.lifestyle.mentalAndSleep}
               audience={audience}
+              details={<MentalSleepDetails mental={output.lifestyle.mentalAndSleep} />}
             />
           </div>
         </section>
@@ -260,5 +263,122 @@ export function RecommendationOutputView({
         </section>
       ) : null}
     </div>
+  );
+}
+
+function NutritionDetails({
+  nutrition,
+}: {
+  nutrition: RecommendationOutput['lifestyle']['nutrition'];
+}) {
+  return (
+    <div className="space-y-3 text-sm text-slate-700">
+      {nutrition.dietType ? (
+        <p>
+          <span className="font-medium text-cyan-900">Tipo de dieta: </span>
+          {nutrition.dietType}
+        </p>
+      ) : null}
+      <NutritionBlock title="Macros" block={nutrition.macros} />
+      <NutritionBlock title="Micros" block={nutrition.micros} />
+    </div>
+  );
+}
+
+function NutritionBlock({
+  title,
+  block,
+}: {
+  title: string;
+  block: RecommendationOutput['lifestyle']['nutrition']['macros'];
+}) {
+  if (!block.targets && block.sources.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-lg border border-cyan-100 bg-white/70 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">{title}</p>
+      {block.targets ? <p className="mt-1 leading-relaxed">{block.targets}</p> : null}
+      {block.sources.length > 0 ? (
+        <ul className="mt-2 list-disc space-y-1 pl-4">
+          {block.sources.map((source, index) => (
+            <li key={index}>
+              <span className="font-medium">{source.nutrient}</span>
+              {source.amount ? ` — ${source.amount}` : ''}
+              {source.foods.length > 0 ? ` · Alimentos: ${source.foods.join(', ')}` : ''}
+              {source.localProducts.length > 0
+                ? ` · Locales: ${source.localProducts.join(', ')}`
+                : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function ExerciseDetails({
+  exercise,
+}: {
+  exercise: RecommendationOutput['lifestyle']['exercise'];
+}) {
+  if (
+    !exercise.type &&
+    !exercise.duration &&
+    !exercise.intensity &&
+    !exercise.intensityExplanation
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-cyan-100 bg-white/70 p-3 text-sm text-slate-700">
+      {exercise.type ? (
+        <p>
+          <span className="font-medium text-cyan-900">Tipo: </span>
+          {exercise.type}
+        </p>
+      ) : null}
+      {exercise.duration ? (
+        <p>
+          <span className="font-medium text-cyan-900">Duración: </span>
+          {exercise.duration}
+        </p>
+      ) : null}
+      {exercise.intensity ? (
+        <p>
+          <span className="font-medium text-cyan-900">Intensidad: </span>
+          {exercise.intensity}
+        </p>
+      ) : null}
+      {exercise.intensityExplanation ? (
+        <p>
+          <span className="font-medium text-cyan-900">Qué significa: </span>
+          {exercise.intensityExplanation}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function MentalSleepDetails({
+  mental,
+}: {
+  mental: RecommendationOutput['lifestyle']['mentalAndSleep'];
+}) {
+  if (mental.practices.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="space-y-2 rounded-lg border border-cyan-100 bg-white/70 p-3 text-sm text-slate-700">
+      {mental.practices.map((practice, index) => (
+        <li key={index}>
+          <p className="font-medium text-cyan-900">{practice.what}</p>
+          <p className="mt-0.5 text-slate-600">Cómo saber que va bien: {practice.howToKnow}</p>
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -1,12 +1,19 @@
 import { ChevronDown, ChevronUp, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
-import type { RecommendationOutput } from '~/validation/recommendations';
+type LifestyleBase = {
+  guidance: string;
+  rationale: string;
+  patientSummary: string;
+  keyNumbers: Array<{ label: string; value: string }>;
+};
 
 type LifestyleCardProps = {
   title: string;
   icon: LucideIcon;
-  item: RecommendationOutput['lifestyle']['nutrition'];
+  item: LifestyleBase;
+  /** Extra structured content shown when expanded (macros/micros, intensity, etc.). */
+  details?: ReactNode;
   /** 'patient' renders a static, always-expanded infographic-style card
    * without the clinician rationale, matching what gets printed. */
   audience: 'provider' | 'patient';
@@ -15,7 +22,7 @@ type LifestyleCardProps = {
 // Interactive square/card for a lifestyle suggestion. Providers see a
 // collapsed summary they can click to expand; patients (share/print view)
 // always see the full plain-language explanation, never the deep rationale.
-export function LifestyleCard({ title, icon: Icon, item, audience }: LifestyleCardProps) {
+export function LifestyleCard({ title, icon: Icon, item, details, audience }: LifestyleCardProps) {
   const isPatient = audience === 'patient';
   const [expanded, setExpanded] = useState(isPatient);
 
@@ -64,6 +71,7 @@ export function LifestyleCard({ title, icon: Icon, item, audience }: LifestyleCa
           {item.patientSummary ? (
             <p className="text-sm leading-relaxed text-slate-700">{item.patientSummary}</p>
           ) : null}
+          {details}
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
             {item.guidance}
           </p>

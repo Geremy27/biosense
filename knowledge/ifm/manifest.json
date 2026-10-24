@@ -1,0 +1,90 @@
+{
+  "$comment": "Maps IFM PDFs to recommendation plan keys. PDFs live in knowledge/ifm/pdfs/ (versioned). After changes run: npm run ingest:ifm",
+  "meta": {
+    "features": {
+      "file": "Features_of_the_IFM_Food_Plans.pdf",
+      "role": "Plan selection matrix for the selection LLM call"
+    },
+    "macronutrients": {
+      "file": "Macronutrient_Distributions_for_the_IFM_Food_Plans.pdf",
+      "role": "P/F/C targets per plan for the selection LLM call"
+    },
+    "phytonutrient": {
+      "file": "Phytonutrient_Spectrum_Foods_Spanish.pdf",
+      "role": "Injected with every chosen plan in the main recommendation call"
+    }
+  },
+  "plans": {
+    "core": {
+      "displayName": "Plan alimenticio básico (Core)",
+      "supportsCalorieTiers": true,
+      "mapsToDietType": "Core",
+      "files": {
+        "default": "Core_Food_Plan_Spanish.pdf",
+        "1200-1400": "Core_Food_Plan_1200-1400_Spanish.pdf",
+        "1400-1800": "Core_Food_Plan_1400-1800_Spanish.pdf",
+        "1800-2200": "Core_Food_Plan_1800-2200_Spanish.pdf"
+      }
+    },
+    "core_vegan": {
+      "displayName": "Plan básico vegano (Core)",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Core (vegano)",
+      "files": { "default": "Core_Food_Plan_Vegan_Spanish.pdf" }
+    },
+    "core_vegetarian": {
+      "displayName": "Plan básico vegetariano (Core)",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Core (vegetariano)",
+      "files": { "default": "Core_Food_Plan_Vegetarian_Spanish.pdf" }
+    },
+    "cardiometabolic": {
+      "displayName": "Plan cardiometabólico",
+      "supportsCalorieTiers": true,
+      "mapsToDietType": "Cardiometabólica",
+      "files": {
+        "default": "Cardiometabolic_Food_Plan_Spanish.pdf",
+        "1200-1400": "Cardiometabolic_Food_Plan_1200-1400_Spanish.pdf",
+        "1400-1800": "Cardiometabolic_Food_Plan_1400-1800_Spanish.pdf",
+        "1800-2200": "Cardiometabolic_Food_Plan_1800-2200_Spanish.pdf"
+      }
+    },
+    "mito": {
+      "displayName": "Plan mitocondrial (Mito)",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Mitocondrial",
+      "files": { "default": "Mito_Food_Plan_Spanish.pdf" }
+    },
+    "detox": {
+      "displayName": "Plan detox",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Detox",
+      "files": { "default": "Detox_Food_Plan_Spanish.pdf" }
+    },
+    "elimination": {
+      "displayName": "Dieta de eliminación",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Eliminatoria",
+      "files": { "default": "Elimination_Diet_Food_Plan_Spanish.pdf" }
+    },
+    "low_fodmap": {
+      "displayName": "Plan Low-FODMAP",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Low-FODMAP",
+      "files": { "default": "Low-FODMAP_Food_Plan_Metric.pdf" }
+    },
+    "anti_candida": {
+      "displayName": "Plan Anti-Candida",
+      "supportsCalorieTiers": false,
+      "mapsToDietType": "Anticandida",
+      "files": { "default": "Anti-Candida_Food_Plan_Metric.pdf" }
+    }
+  },
+  "unusedDuplicates": {
+    "$comment": "Same content as metric versions; keep for reference, not ingested",
+    "files": [
+      "Anti-Candida_Food_Plan_Imperial.pdf",
+      "Low-FODMAP_Food_Plan_Imperial.pdf"
+    ]
+  }
+}

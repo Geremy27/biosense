@@ -6,13 +6,20 @@ import {
   formatFindingSeverity,
   severityBadgeClass,
 } from '~/utils/recommendation-display';
+import {
+  patientClinicalContextFields,
+  type PatientClinicalContextSource,
+} from '~/utils/patient-display';
 import type { RecommendationOutput, ShareableSection } from '~/validation/recommendations';
 
 type RecommendationOutputViewProps = {
   output: RecommendationOutput;
+  /** Expediente del paciente; alimenta la tarjeta de contexto clínico (no el eco del modelo). */
+  patient?: PatientClinicalContextSource | null;
   /** 'provider' (default) shows every clinical section. 'patient' hides
    * clinician-only internals (hallazgos, métricas derivadas, resumen
-   * ejecutivo, consideración de medicación) regardless of visibleSections. */
+   * ejecutivo, recomendaciones, consideración de medicación) regardless of
+   * visibleSections. */
   audience?: 'provider' | 'patient';
   /** When provided, restricts the shareable sections to this list (used by
    * the share/print screen). Omit to show every section for the audience. */
@@ -22,6 +29,7 @@ type RecommendationOutputViewProps = {
 
 export function RecommendationOutputView({
   output,
+  patient,
   audience = 'provider',
   visibleSections,
   residenceRegionName,
@@ -52,24 +60,44 @@ export function RecommendationOutputView({
       {isProvider && showSection('context') ? (
         <section data-pdf-block className="card">
           <h3 className="text-lg font-bold text-cyan-950">Contexto clínico usado</h3>
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Edad
-              </dt>
-              <dd className="mt-1 text-sm font-semibold text-cyan-950">
-                {output.patientContextEcho.ageYears} años
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Sexo
-              </dt>
-              <dd className="mt-1 text-sm font-semibold text-cyan-950">
-                {output.patientContextEcho.sex || 'No indicado'}
-              </dd>
-            </div>
-          </dl>
+          <p className="mt-1 text-xs text-slate-500">
+            Datos del expediente vinculados a esta recomendación (la generación con IA no incluye
+            identificación ni contacto).
+          </p>
+          {patient ? (
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {patientClinicalContextFields({
+                ...patient,
+                residenceRegionName: residenceRegionName ?? patient.residenceRegionName,
+              }).map((field) => (
+                <div key={field.label}>
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    {field.label}
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-cyan-950">{field.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Edad
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-cyan-950">
+                  {output.patientContextEcho.ageYears} años
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Sexo
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-cyan-950">
+                  {output.patientContextEcho.sex || 'No indicado'}
+                </dd>
+              </div>
+            </dl>
+          )}
         </section>
       ) : null}
 
@@ -162,7 +190,7 @@ export function RecommendationOutputView({
         </section>
       ) : null}
 
-      {showSection('recommendations') ? (
+      {isProvider ? (
         <section data-pdf-block className="card space-y-4">
           <h3 className="text-lg font-bold text-cyan-950">Recomendaciones</h3>
           <ul className="mt-2 list-disc space-y-4 pl-5">
@@ -239,6 +267,30 @@ export function RecommendationOutputView({
                   }
                 />
               </div>
+              {output.lifestyle.exercise.reasons.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">
+                    Por qué este plan
+                  </p>
+                  <ol className="space-y-3">
+                    {output.lifestyle.exercise.reasons.map((item, index) => (
+                      <li
+                        key={index}
+                        className="rounded-lg border border-cyan-100 bg-cyan-50/40 p-4"
+                      >
+                        <p className="text-sm font-semibold text-cyan-950">
+                          {index + 1}. {item.reason}
+                        </p>
+                        {item.explanation ? (
+                          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                            {item.explanation}
+                          </p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
             </LifestyleSection>
 
             <LifestyleSection
@@ -248,27 +300,66 @@ export function RecommendationOutputView({
               patientSummary={output.lifestyle.mentalAndSleep.patientSummary}
               guidance={output.lifestyle.mentalAndSleep.guidance}
               rationale={showRationale ? output.lifestyle.mentalAndSleep.rationale : ''}
+              meta={
+                output.lifestyle.mentalAndSleep.sleepTarget ? (
+                  <p className="text-sm text-slate-600">
+                    <span className="font-medium text-cyan-900">Meta: </span>
+                    {output.lifestyle.mentalAndSleep.sleepTarget}
+                  </p>
+                ) : null
+              }
             >
-              {output.lifestyle.mentalAndSleep.practices.length > 0 ? (
-                <div
-                  data-pdf-lifestyle-subgrid
-                  className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-                >
-                  {output.lifestyle.mentalAndSleep.practices.map((practice, index) => (
-                    <LabeledSubsection
-                      key={index}
-                      title={practice.what || `Práctica ${index + 1}`}
-                      extra={
-                        practice.howToKnow
-                          ? { label: 'Cómo saber que va bien', body: practice.howToKnow }
-                          : null
-                      }
-                    />
-                  ))}
+              {output.lifestyle.mentalAndSleep.sleepProtocol.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">
+                    Cómo lograrlo
+                  </p>
+                  <div
+                    data-pdf-lifestyle-subgrid
+                    className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                  >
+                    {output.lifestyle.mentalAndSleep.sleepProtocol.map((step, index) => (
+                      <LabeledSubsection
+                        key={index}
+                        title={step.lever || `Palanca ${index + 1}`}
+                        body={step.action}
+                        extra={
+                          step.howToKnow
+                            ? { label: 'Cómo saber que va bien', body: step.howToKnow }
+                            : null
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-sm text-slate-500">Sin prácticas estructuradas.</p>
-              )}
+              ) : null}
+              {output.lifestyle.mentalAndSleep.practices.length > 0 ? (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-cyan-900">
+                    Prácticas mentales
+                  </p>
+                  <div
+                    data-pdf-lifestyle-subgrid
+                    className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                  >
+                    {output.lifestyle.mentalAndSleep.practices.map((practice, index) => (
+                      <LabeledSubsection
+                        key={index}
+                        title={practice.what || `Práctica ${index + 1}`}
+                        extra={
+                          practice.howToKnow
+                            ? { label: 'Cómo saber que va bien', body: practice.howToKnow }
+                            : null
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {output.lifestyle.mentalAndSleep.sleepProtocol.length === 0 &&
+              output.lifestyle.mentalAndSleep.practices.length === 0 ? (
+                <p className="text-sm text-slate-500">Sin protocolo de sueño ni prácticas.</p>
+              ) : null}
             </LifestyleSection>
           </div>
         </section>
@@ -411,24 +502,45 @@ function NutritionSubsection({
                 {source.nutrient}
                 {source.amount ? ` — ${source.amount}` : ''}
               </p>
-              {source.foods.length > 0 ? (
-                <p className="mt-1">
-                  <span className="font-medium text-cyan-900">Obtener de: </span>
-                  {source.foods.join(', ')}
-                </p>
-              ) : null}
-              {source.localProducts.length > 0 ? (
-                <p className="mt-1">
-                  <span className="font-medium text-cyan-900">En tu ciudad: </span>
-                  {source.localProducts.join(', ')}
-                </p>
-              ) : null}
+              <FoodPortionList
+                label={title === 'Micros' ? 'Porción para cubrir la meta' : 'Obtener de'}
+                items={source.foods}
+              />
+              <FoodPortionList label="En tu ciudad" items={source.localProducts} />
             </li>
           ))}
         </ul>
       ) : (
         <p className="mt-2 text-sm text-slate-500">Sin detalle estructurado.</p>
       )}
+    </div>
+  );
+}
+
+function FoodPortionList({
+  label,
+  items,
+}: {
+  label: string;
+  items: Array<{ name: string; approximateAmount: string }>;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2">
+      <p className="font-medium text-cyan-900">{label}</p>
+      <ul className="mt-1 space-y-1">
+        {items.map((item, index) => (
+          <li key={`${item.name}-${index}`}>
+            <span className="font-medium text-slate-800">{item.name}</span>
+            {item.approximateAmount ? (
+              <span className="text-slate-600"> — {item.approximateAmount}</span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

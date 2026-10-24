@@ -61,6 +61,7 @@ export async function updateClinicalRecommendation(
       | 'generatedAt'
       | 'confirmedAt'
       | 'confirmedByUserId'
+      | 'promptSnapshot'
     >
   >,
 ): Promise<ClinicalRecommendationRow | null> {

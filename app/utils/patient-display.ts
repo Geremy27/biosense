@@ -83,3 +83,64 @@ export function formatBmi(heightCm: string | null | undefined, weightKg: string 
 
   return String(Math.round((weight / (height / 100) ** 2) * 10) / 10);
 }
+
+export type PatientClinicalContextSource = {
+  identificationType: IdentificationType;
+  identificationNumber: string;
+  birthDate: string;
+  birthPlace: string;
+  residencePlace: string;
+  residenceRegionName?: string | null;
+  phone: string;
+  email?: string | null;
+  sex?: Sex | null;
+  ethnicity?: string | null;
+  heightCm?: string | null;
+  weightKg?: string | null;
+};
+
+type ClinicalContextField = { label: string; value: string };
+
+/** Read-only demographic fields for recommendation context and share headers. */
+export function patientClinicalContextFields(
+  patient: PatientClinicalContextSource,
+): ClinicalContextField[] {
+  const bmi = formatBmi(patient.heightCm, patient.weightKg);
+  const fields: ClinicalContextField[] = [
+    {
+      label: 'Identificación',
+      value: formatIdentification(patient.identificationType, patient.identificationNumber),
+    },
+    { label: 'Edad', value: `${calculateAgeYears(patient.birthDate)} años` },
+    { label: 'Sexo', value: formatSex(patient.sex) },
+    { label: 'Correo electrónico', value: patient.email?.trim() || '—' },
+    { label: 'Teléfono', value: patient.phone },
+    {
+      label: 'Fecha de nacimiento',
+      value: new Date(`${patient.birthDate}T00:00:00`).toLocaleDateString('es-CO'),
+    },
+    { label: 'Lugar de nacimiento', value: patient.birthPlace },
+    { label: 'Ciudad / región', value: patient.residenceRegionName ?? '—' },
+    { label: 'Residencia', value: patient.residencePlace },
+  ];
+
+  if (patient.ethnicity) {
+    fields.push({ label: 'Etnia', value: patient.ethnicity });
+  }
+
+  const height = formatMeasurement(patient.heightCm, 'cm');
+  if (height) {
+    fields.push({ label: 'Estatura', value: height });
+  }
+
+  const weight = formatMeasurement(patient.weightKg, 'kg');
+  if (weight) {
+    fields.push({ label: 'Peso', value: weight });
+  }
+
+  if (bmi) {
+    fields.push({ label: 'IMC', value: bmi });
+  }
+
+  return fields;
+}

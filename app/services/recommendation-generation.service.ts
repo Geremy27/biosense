@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
 import {
-  recommendationOutputSchema,
+  recommendationGenerationSchema,
   type RecommendationOutput,
 } from '~/validation/recommendations';
 
@@ -30,7 +30,7 @@ export async function generateRecommendationOutput({
       { role: 'user', content: userPrompt },
     ],
     text: {
-      format: zodTextFormat(recommendationOutputSchema, 'clinical_recommendation'),
+      format: zodTextFormat(recommendationGenerationSchema, 'clinical_recommendation'),
     },
   });
 

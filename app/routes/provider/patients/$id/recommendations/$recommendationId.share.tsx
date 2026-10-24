@@ -12,32 +12,20 @@ import {
 import { buildActorContext } from '~/utils/session.server';
 import { asRecommendationOutput, shareableSectionValues } from '~/validation/recommendations';
 import type { ShareableSection } from '~/validation/recommendations';
-import {
-  calculateAgeYears,
-  formatBmi,
-  formatMeasurement,
-  formatPatientName,
-  formatSex,
-} from '~/utils/patient-display';
+import { formatPatientName, patientClinicalContextFields } from '~/utils/patient-display';
 
 import type { PatientOutletContext } from '../patient-outlet-context';
 import type { Route } from './+types/$recommendationId.share';
 
 const SECTION_LABELS: Record<ShareableSection, string> = {
-  context: 'Contexto clínico (edad y sexo)',
+  context: 'Contexto clínico (datos del paciente)',
   executiveSummary: 'Resumen ejecutivo',
   conclusions: 'Conclusiones',
-  recommendations: 'Recomendaciones',
   lifestyle: 'Sugerencias de estilo de vida',
   supplements: 'Posibles suplementos',
 };
 
-const DEFAULT_SECTIONS: ShareableSection[] = [
-  'conclusions',
-  'recommendations',
-  'lifestyle',
-  'supplements',
-];
+const DEFAULT_SECTIONS: ShareableSection[] = ['conclusions', 'lifestyle', 'supplements'];
 
 function slugify(value: string) {
   return value
@@ -46,41 +34,6 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-}
-
-function shareHeaderFields(patient: PatientOutletContext['patient']) {
-  const bmi = formatBmi(patient.heightCm, patient.weightKg);
-  const fields: Array<{ label: string; value: string }> = [
-    { label: 'Edad', value: `${calculateAgeYears(patient.birthDate)} años` },
-    { label: 'Sexo', value: formatSex(patient.sex) },
-    {
-      label: 'Fecha de nacimiento',
-      value: new Date(`${patient.birthDate}T00:00:00`).toLocaleDateString('es-CO'),
-    },
-    { label: 'Lugar de nacimiento', value: patient.birthPlace },
-    { label: 'Ciudad / región', value: patient.residenceRegionName ?? '—' },
-    { label: 'Residencia', value: patient.residencePlace },
-  ];
-
-  if (patient.ethnicity) {
-    fields.push({ label: 'Etnia', value: patient.ethnicity });
-  }
-
-  const height = formatMeasurement(patient.heightCm, 'cm');
-  if (height) {
-    fields.push({ label: 'Estatura', value: height });
-  }
-
-  const weight = formatMeasurement(patient.weightKg, 'kg');
-  if (weight) {
-    fields.push({ label: 'Peso', value: weight });
-  }
-
-  if (bmi) {
-    fields.push({ label: 'IMC', value: bmi });
-  }
-
-  return fields;
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -119,9 +72,14 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
   const output = asRecommendationOutput(recommendation.output);
   const savedSections = (
     Array.isArray(recommendation.shareSections)
-      ? (recommendation.shareSections as ShareableSection[])
+      ? (recommendation.shareSections as string[])
       : DEFAULT_SECTIONS
-  ).filter((section) => section !== 'context' && section !== 'executiveSummary');
+  ).filter(
+    (section): section is ShareableSection =>
+      (shareableSectionValues as readonly string[]).includes(section) &&
+      section !== 'context' &&
+      section !== 'executiveSummary',
+  );
   const [selected, setSelected] = useState<ShareableSection[]>(savedSections);
   const [isSavingPdf, setIsSavingPdf] = useState(false);
   const submit = useSubmit();
@@ -265,7 +223,8 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
         <h2 className="mt-2 text-2xl font-bold text-cyan-950">Compartir con el paciente</h2>
         <p className="mt-2 text-sm text-slate-500">
           Elige qué secciones incluir, como cuando eliges páginas al imprimir. Hallazgos, métricas
-          derivadas y el resumen ejecutivo nunca se comparten: son solo para el médico.
+          derivadas, el resumen ejecutivo y las recomendaciones nunca se comparten: son solo para el
+          médico.
         </p>
       </div>
 
@@ -316,7 +275,7 @@ export default function RecommendationShare({ loaderData }: Route.ComponentProps
           </p>
           <h3 className="mt-1 text-xl font-bold text-cyan-950">{formatPatientName(patient)}</h3>
           <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {shareHeaderFields(patient).map((field) => (
+            {patientClinicalContextFields(patient).map((field) => (
               <div key={field.label}>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                   {field.label}

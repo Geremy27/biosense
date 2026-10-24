@@ -225,6 +225,7 @@ export default function RecommendationDetail({ loaderData, actionData }: Route.C
           ) : (
             <RecommendationOutputView
               output={output}
+              patient={patient}
               audience="provider"
               residenceRegionName={patient.residenceRegionName}
             />

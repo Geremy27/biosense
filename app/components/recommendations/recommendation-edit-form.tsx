@@ -27,13 +27,16 @@ const EMPTY_SUPPLEMENT: SupplementDraft = {
   requiresMoreLabs: false,
   missingLabs: null,
 };
+const EMPTY_FOOD_PORTION = { name: '', approximateAmount: '' };
 const EMPTY_NUTRIENT_SOURCE = {
   nutrient: '',
   amount: null as string | null,
-  foods: [] as string[],
-  localProducts: [] as string[],
+  foods: [] as Array<{ name: string; approximateAmount: string }>,
+  localProducts: [] as Array<{ name: string; approximateAmount: string }>,
 };
 const EMPTY_PRACTICE = { what: '', howToKnow: '' };
+const EMPTY_SLEEP_LEVER = { lever: '', action: '', howToKnow: '' };
+const EMPTY_EXERCISE_REASON = { reason: '', explanation: '' };
 
 type NutritionBlock = RecommendationOutput['lifestyle']['nutrition']['macros'];
 
@@ -270,7 +273,7 @@ export function RecommendationEditForm({
                   />
                   <NutritionBlockEditor
                     idPrefix="micros"
-                    title="Micros — de dónde obtenerlos"
+                    title="Micros — cuánto de cada alimento cubre la meta"
                     block={lifestyle.nutrition.micros}
                     onChange={(micros) =>
                       setLifestyle((current) => ({
@@ -283,72 +286,297 @@ export function RecommendationEditForm({
               ) : null}
 
               {key === 'exercise' ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <FormField id="lifestyle-exercise-type" label="Tipo">
-                    <input
-                      id="lifestyle-exercise-type"
-                      className="input"
-                      value={lifestyle.exercise.type}
-                      onChange={(event) =>
-                        setLifestyle((current) => ({
-                          ...current,
-                          exercise: { ...current.exercise, type: event.target.value },
-                        }))
-                      }
-                    />
-                  </FormField>
-                  <FormField id="lifestyle-exercise-duration" label="Duración">
-                    <input
-                      id="lifestyle-exercise-duration"
-                      className="input"
-                      value={lifestyle.exercise.duration}
-                      onChange={(event) =>
-                        setLifestyle((current) => ({
-                          ...current,
-                          exercise: { ...current.exercise, duration: event.target.value },
-                        }))
-                      }
-                    />
-                  </FormField>
-                  <FormField id="lifestyle-exercise-intensity" label="Intensidad">
-                    <input
-                      id="lifestyle-exercise-intensity"
-                      className="input"
-                      value={lifestyle.exercise.intensity}
-                      onChange={(event) =>
-                        setLifestyle((current) => ({
-                          ...current,
-                          exercise: { ...current.exercise, intensity: event.target.value },
-                        }))
-                      }
-                    />
-                  </FormField>
-                  <FormField
-                    id="lifestyle-exercise-intensity-explanation"
-                    label="Qué significa esa intensidad"
-                  >
-                    <input
+                <div className="mt-3 space-y-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <FormField id="lifestyle-exercise-type" label="Tipo">
+                      <textarea
+                        id="lifestyle-exercise-type"
+                        className="input"
+                        rows={2}
+                        value={lifestyle.exercise.type}
+                        onChange={(event) =>
+                          setLifestyle((current) => ({
+                            ...current,
+                            exercise: { ...current.exercise, type: event.target.value },
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField id="lifestyle-exercise-duration" label="Duración">
+                      <textarea
+                        id="lifestyle-exercise-duration"
+                        className="input"
+                        rows={2}
+                        value={lifestyle.exercise.duration}
+                        onChange={(event) =>
+                          setLifestyle((current) => ({
+                            ...current,
+                            exercise: { ...current.exercise, duration: event.target.value },
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField id="lifestyle-exercise-intensity" label="Intensidad">
+                      <input
+                        id="lifestyle-exercise-intensity"
+                        className="input"
+                        value={lifestyle.exercise.intensity}
+                        onChange={(event) =>
+                          setLifestyle((current) => ({
+                            ...current,
+                            exercise: { ...current.exercise, intensity: event.target.value },
+                          }))
+                        }
+                      />
+                    </FormField>
+                    <FormField
                       id="lifestyle-exercise-intensity-explanation"
-                      className="input"
-                      value={lifestyle.exercise.intensityExplanation}
-                      onChange={(event) =>
-                        setLifestyle((current) => ({
-                          ...current,
-                          exercise: {
-                            ...current.exercise,
-                            intensityExplanation: event.target.value,
-                          },
-                        }))
-                      }
-                    />
-                  </FormField>
+                      label="Qué significa esa intensidad"
+                    >
+                      <textarea
+                        id="lifestyle-exercise-intensity-explanation"
+                        className="input"
+                        rows={3}
+                        value={lifestyle.exercise.intensityExplanation}
+                        onChange={(event) =>
+                          setLifestyle((current) => ({
+                            ...current,
+                            exercise: {
+                              ...current.exercise,
+                              intensityExplanation: event.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </FormField>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-slate-700">Por qué este plan</p>
+                    {lifestyle.exercise.reasons.length < 5 ? (
+                      <button
+                        type="button"
+                        className="btn-ghost gap-2"
+                        onClick={() =>
+                          setLifestyle((current) => ({
+                            ...current,
+                            exercise: {
+                              ...current.exercise,
+                              reasons: [
+                                ...current.exercise.reasons,
+                                { ...EMPTY_EXERCISE_REASON },
+                              ],
+                            },
+                          }))
+                        }
+                      >
+                        <Plus className="size-4" aria-hidden />
+                        Agregar motivo
+                      </button>
+                    ) : null}
+                  </div>
+                  {lifestyle.exercise.reasons.length === 0 ? (
+                    <p className="text-sm text-slate-500">Sin motivos todavía.</p>
+                  ) : (
+                    lifestyle.exercise.reasons.map((item, index) => (
+                      <div key={index} className="space-y-2 rounded-lg border border-slate-200 p-3">
+                        <FormField id={`exercise-reason-${index}`} label={`Motivo ${index + 1}`}>
+                          <input
+                            id={`exercise-reason-${index}`}
+                            className="input"
+                            value={item.reason}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                exercise: {
+                                  ...current.exercise,
+                                  reasons: current.exercise.reasons.map((row, i) =>
+                                    i === index ? { ...row, reason: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <FormField
+                          id={`exercise-reason-${index}-explanation`}
+                          label="Explicación"
+                        >
+                          <textarea
+                            id={`exercise-reason-${index}-explanation`}
+                            className="input"
+                            rows={3}
+                            value={item.explanation}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                exercise: {
+                                  ...current.exercise,
+                                  reasons: current.exercise.reasons.map((row, i) =>
+                                    i === index
+                                      ? { ...row, explanation: event.target.value }
+                                      : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                          onClick={() =>
+                            setLifestyle((current) => ({
+                              ...current,
+                              exercise: {
+                                ...current.exercise,
+                                reasons: current.exercise.reasons.filter((_, i) => i !== index),
+                              },
+                            }))
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Quitar
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               ) : null}
 
               {key === 'mentalAndSleep' ? (
                 <div className="mt-3 space-y-3">
+                  <FormField id="lifestyle-sleep-target" label="Meta de sueño">
+                    <input
+                      id="lifestyle-sleep-target"
+                      className="input"
+                      placeholder="Ej. 7–8 h, misma franja ±30 min"
+                      value={lifestyle.mentalAndSleep.sleepTarget}
+                      onChange={(event) =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          mentalAndSleep: {
+                            ...current.mentalAndSleep,
+                            sleepTarget: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </FormField>
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-700">Prácticas concretas</p>
+                    <p className="text-sm font-medium text-slate-700">Cómo lograrlo</p>
+                    <button
+                      type="button"
+                      className="btn-ghost gap-2"
+                      onClick={() =>
+                        setLifestyle((current) => ({
+                          ...current,
+                          mentalAndSleep: {
+                            ...current.mentalAndSleep,
+                            sleepProtocol: [
+                              ...current.mentalAndSleep.sleepProtocol,
+                              { ...EMPTY_SLEEP_LEVER },
+                            ],
+                          },
+                        }))
+                      }
+                    >
+                      <Plus className="size-4" aria-hidden />
+                      Agregar palanca
+                    </button>
+                  </div>
+                  {lifestyle.mentalAndSleep.sleepProtocol.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      Sin palancas todavía. La meta de horas no basta: indica cómo alcanzarla.
+                    </p>
+                  ) : (
+                    lifestyle.mentalAndSleep.sleepProtocol.map((step, index) => (
+                      <div key={index} className="space-y-2 rounded-lg border border-slate-200 p-3">
+                        <FormField id={`sleep-lever-${index}-name`} label="Palanca">
+                          <input
+                            id={`sleep-lever-${index}-name`}
+                            className="input"
+                            placeholder="Ej. Corte de cafeína"
+                            value={step.lever}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                mentalAndSleep: {
+                                  ...current.mentalAndSleep,
+                                  sleepProtocol: current.mentalAndSleep.sleepProtocol.map(
+                                    (row, i) =>
+                                      i === index ? { ...row, lever: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <FormField id={`sleep-lever-${index}-action`} label="Qué hacer">
+                          <textarea
+                            id={`sleep-lever-${index}-action`}
+                            className="input"
+                            rows={2}
+                            placeholder="Ej. Cero cafeína desde 8 h antes de acostarse"
+                            value={step.action}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                mentalAndSleep: {
+                                  ...current.mentalAndSleep,
+                                  sleepProtocol: current.mentalAndSleep.sleepProtocol.map(
+                                    (row, i) =>
+                                      i === index ? { ...row, action: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <FormField
+                          id={`sleep-lever-${index}-how`}
+                          label="Cómo saber que se está logrando"
+                        >
+                          <input
+                            id={`sleep-lever-${index}-how`}
+                            className="input"
+                            value={step.howToKnow}
+                            onChange={(event) =>
+                              setLifestyle((current) => ({
+                                ...current,
+                                mentalAndSleep: {
+                                  ...current.mentalAndSleep,
+                                  sleepProtocol: current.mentalAndSleep.sleepProtocol.map(
+                                    (row, i) =>
+                                      i === index ? { ...row, howToKnow: event.target.value } : row,
+                                  ),
+                                },
+                              }))
+                            }
+                          />
+                        </FormField>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"
+                          onClick={() =>
+                            setLifestyle((current) => ({
+                              ...current,
+                              mentalAndSleep: {
+                                ...current.mentalAndSleep,
+                                sleepProtocol: current.mentalAndSleep.sleepProtocol.filter(
+                                  (_, i) => i !== index,
+                                ),
+                              },
+                            }))
+                          }
+                        >
+                          <Trash2 className="size-4" aria-hidden />
+                          Quitar
+                        </button>
+                      </div>
+                    ))
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-slate-700">Prácticas mentales</p>
                     <button
                       type="button"
                       className="btn-ghost gap-2"
@@ -665,11 +893,74 @@ export function RecommendationEditForm({
   );
 }
 
-function splitCommaList(value: string) {
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+function FoodPortionEditor({
+  idPrefix,
+  label,
+  addLabel,
+  placeholderName,
+  placeholderAmount,
+  items,
+  onChange,
+}: {
+  idPrefix: string;
+  label: string;
+  addLabel: string;
+  placeholderName: string;
+  placeholderAmount: string;
+  items: Array<{ name: string; approximateAmount: string }>;
+  onChange: (items: Array<{ name: string; approximateAmount: string }>) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-cyan-950">{label}</p>
+      {items.map((item, index) => (
+        <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            id={`${idPrefix}-${index}-name`}
+            className="input sm:flex-1"
+            placeholder={placeholderName}
+            aria-label={`${label} ${index + 1}`}
+            value={item.name}
+            onChange={(event) =>
+              onChange(
+                items.map((row, i) => (i === index ? { ...row, name: event.target.value } : row)),
+              )
+            }
+          />
+          <input
+            id={`${idPrefix}-${index}-amount`}
+            className="input sm:flex-1"
+            placeholder={placeholderAmount}
+            aria-label={`Cantidad aproximada ${index + 1}`}
+            value={item.approximateAmount}
+            onChange={(event) =>
+              onChange(
+                items.map((row, i) =>
+                  i === index ? { ...row, approximateAmount: event.target.value } : row,
+                ),
+              )
+            }
+          />
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"
+            onClick={() => onChange(items.filter((_, i) => i !== index))}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Quitar
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="btn-ghost gap-2"
+        onClick={() => onChange([...items, { ...EMPTY_FOOD_PORTION }])}
+      >
+        <Plus className="size-4" aria-hidden />
+        {addLabel}
+      </button>
+    </div>
+  );
 }
 
 function NutritionBlockEditor({
@@ -713,11 +1004,11 @@ function NutritionBlockEditor({
               }
             />
           </FormField>
-          <FormField id={`${idPrefix}-source-${index}-amount`} label="Cantidad">
+          <FormField id={`${idPrefix}-source-${index}-amount`} label="Meta del nutriente">
             <input
               id={`${idPrefix}-source-${index}-amount`}
               className="input"
-              placeholder="Ej: 120 g/día"
+              placeholder="Ej: 320 mg/día"
               value={source.amount ?? ''}
               onChange={(event) =>
                 onChange({
@@ -731,43 +1022,36 @@ function NutritionBlockEditor({
               }
             />
           </FormField>
-          <FormField id={`${idPrefix}-source-${index}-foods`} label="Alimentos (separados por coma)">
-            <input
-              id={`${idPrefix}-source-${index}-foods`}
-              className="input"
-              placeholder="Huevo, pollo, lentejas"
-              value={source.foods.join(', ')}
-              onChange={(event) =>
-                onChange({
-                  ...block,
-                  sources: block.sources.map((row, i) =>
-                    i === index ? { ...row, foods: splitCommaList(event.target.value) } : row,
-                  ),
-                })
-              }
-            />
-          </FormField>
-          <FormField
-            id={`${idPrefix}-source-${index}-local`}
-            label="Productos locales (separados por coma)"
-          >
-            <input
-              id={`${idPrefix}-source-${index}-local`}
-              className="input"
-              placeholder="Quinua, uchuva"
-              value={source.localProducts.join(', ')}
-              onChange={(event) =>
-                onChange({
-                  ...block,
-                  sources: block.sources.map((row, i) =>
-                    i === index
-                      ? { ...row, localProducts: splitCommaList(event.target.value) }
-                      : row,
-                  ),
-                })
-              }
-            />
-          </FormField>
+          <FoodPortionEditor
+            idPrefix={`${idPrefix}-source-${index}-foods`}
+            label="Alimentos y cantidad aproximada"
+            addLabel="Agregar alimento"
+            placeholderName="Almendras"
+            placeholderAmount="30 g — cubre ~25% de la meta"
+            items={source.foods}
+            onChange={(foods) =>
+              onChange({
+                ...block,
+                sources: block.sources.map((row, i) => (i === index ? { ...row, foods } : row)),
+              })
+            }
+          />
+          <FoodPortionEditor
+            idPrefix={`${idPrefix}-source-${index}-local`}
+            label="Productos locales y cantidad aproximada"
+            addLabel="Agregar producto"
+            placeholderName="Cacao"
+            placeholderAmount="15 g — cubre ~10% de la meta"
+            items={source.localProducts}
+            onChange={(localProducts) =>
+              onChange({
+                ...block,
+                sources: block.sources.map((row, i) =>
+                  i === index ? { ...row, localProducts } : row,
+                ),
+              })
+            }
+          />
           <button
             type="button"
             className="inline-flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700"

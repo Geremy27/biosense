@@ -1,5 +1,10 @@
 import { AuditAction, ClinicalRecommendationStatus, LabReportStatus, Sex } from '~/db/models/enums';
-import type { MedicalHistoryDatedItem } from '~/db/models/patient-medical-histories';
+import type {
+  DeidentifiedPatientSnapshot,
+  LabSnapshot,
+  LocalFoodSnapshot,
+  MedicalHistorySnapshot,
+} from './clinical-recommendation-snapshots';
 import {
   confirmClinicalRecommendationRow,
   findClinicalRecommendationByPatientAndId,
@@ -31,6 +36,10 @@ import { zodFieldErrors } from '~/validation/zod-errors';
 import { record } from './audit.service';
 import { assertPatientAccess, assertProvider } from './authz';
 import type { ActorContext } from './context';
+import {
+  buildIfmFoodPlanContext,
+  selectIfmFoodPlan,
+} from './ifm-food-plan.service';
 import { generateRecommendationOutput } from './recommendation-generation.service';
 
 export class ClinicalRecommendationValidationError extends Error {
@@ -43,59 +52,12 @@ export class ClinicalRecommendationValidationError extends Error {
   }
 }
 
-export type DeidentifiedPatientSnapshot = {
-  ageYears: number;
-  sex: string | null;
-  ethnicity: string | null;
-  heightCm: string | null;
-  weightKg: string | null;
-  bmi: number | null;
-  residencePlace: string | null;
-  residenceRegion: string | null;
-};
-
-export type LocalFoodSnapshot = {
-  name: string;
-  role: string;
-  nutrients: string[];
-  notes: string | null;
-};
-
-export type LabSnapshot = {
-  collectedAt: string | null;
-  labName: string | null;
-  panelName: string | null;
-  analytes: Array<{
-    name: string;
-    value: string;
-    unit: string | null;
-    referenceRange: string | null;
-    optimalRange: string | null;
-    flag: string | null;
-  }>;
-};
-
-export type MedicalHistorySnapshot = {
-  title: string;
-  recordedAt: string;
-  chiefComplaint: string | null;
-  personalHistory1: MedicalHistoryDatedItem[];
-  personalHistory2: MedicalHistoryDatedItem[];
-  surgicalHistory: MedicalHistoryDatedItem[];
-  medications: MedicalHistoryDatedItem[];
-  supplements: MedicalHistoryDatedItem[];
-  diet: MedicalHistoryDatedItem[];
-  infectiousHistory: string | null;
-  traumaticHistory: string | null;
-  toxicologicalHistory: MedicalHistoryDatedItem[];
-  allergies: string | null;
-  vaccines: string | null;
-  habits: string | null;
-  gynecoObstetricHistory: string | null;
-  familyHistory: string | null;
-  psychosocialHistory: string | null;
-  notes: string | null;
-};
+export type {
+  DeidentifiedPatientSnapshot,
+  LabSnapshot,
+  LocalFoodSnapshot,
+  MedicalHistorySnapshot,
+} from './clinical-recommendation-snapshots';
 
 export async function listClinicalRecommendations(ctx: ActorContext, patientId: string) {
   await assertRecommendationPatientAccess(ctx, patientId);
@@ -225,7 +187,7 @@ export async function generateClinicalRecommendation(
   const medicationsText = input.medicationsText ?? medicationsAndSupplementsText;
 
   const model = input.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o';
-  const userPrompt = buildClinicalUserPrompt({
+  const userPromptBase = buildClinicalUserPrompt({
     patientSnapshot,
     labSnapshot,
     medicalHistorySnapshot,
@@ -238,8 +200,8 @@ export async function generateClinicalRecommendation(
     '### SYSTEM',
     input.systemPrompt,
     '',
-    '### USER',
-    userPrompt,
+    '### USER (clinical data)',
+    userPromptBase,
   ].join('\n');
 
   const recommendation = await insertClinicalRecommendation({
@@ -269,6 +231,38 @@ export async function generateClinicalRecommendation(
   });
 
   try {
+    const ifmSelection = await selectIfmFoodPlan({
+      patientSnapshot,
+      labSnapshot,
+      medicalHistorySnapshot,
+      medicationsText,
+      model,
+    });
+    const ifmContext = buildIfmFoodPlanContext(ifmSelection);
+    const userPrompt = [userPromptBase, '', ifmContext].join('\n');
+
+    const fullPromptSnapshot = [
+      promptSnapshot,
+      '',
+      '### IFM FOOD PLAN SELECTION',
+      JSON.stringify(
+        {
+          planKey: ifmSelection.planKey,
+          calorieTier: ifmSelection.calorieTier,
+          rationale: ifmSelection.rationale,
+        },
+        null,
+        2,
+      ),
+      '',
+      '### USER (IFM reference)',
+      ifmContext,
+    ].join('\n');
+
+    await updateClinicalRecommendation(patientId, recommendation.id, {
+      promptSnapshot: fullPromptSnapshot,
+    });
+
     const generated = await generateRecommendationOutput({
       systemPrompt: input.systemPrompt,
       userPrompt,

@@ -34,11 +34,20 @@ const lifestyleBaseSchema = z.object({
   keyNumbers: z.array(lifestyleKeyNumberSchema).max(4).default([]),
 });
 
+const foodPortionSchema = z.object({
+  name: z.string().describe('Nombre del alimento o ingrediente.'),
+  approximateAmount: z
+    .string()
+    .describe(
+      'Cantidad aproximada de este alimento y qué parte de la meta cubre. En micros, las porciones de la lista deben sumar cerca del 100% de la meta. Ej: "30 g (un puñado) — cubre ~80 mg, cerca del 25% de 320 mg".',
+    ),
+});
+
 const nutrientSourceSchema = z.object({
   nutrient: z.string(),
   amount: z.string().nullable(),
-  foods: z.array(z.string()).default([]),
-  localProducts: z.array(z.string()).default([]),
+  foods: z.array(foodPortionSchema).default([]),
+  localProducts: z.array(foodPortionSchema).default([]),
 });
 
 const nutritionBlockSchema = z.object({
@@ -52,14 +61,28 @@ export const nutritionLifestyleSchema = lifestyleBaseSchema.extend({
   micros: nutritionBlockSchema.default({ targets: '', sources: [] }),
 });
 
+export const exerciseReasonSchema = z.object({
+  reason: z.string(),
+  explanation: z.string(),
+});
+
 export const exerciseLifestyleSchema = lifestyleBaseSchema.extend({
   type: z.string().default(''),
   duration: z.string().default(''),
   intensity: z.string().default(''),
   intensityExplanation: z.string().default(''),
+  reasons: z.array(exerciseReasonSchema).max(5).default([]),
+});
+
+const sleepLeverSchema = z.object({
+  lever: z.string(),
+  action: z.string(),
+  howToKnow: z.string(),
 });
 
 export const mentalSleepLifestyleSchema = lifestyleBaseSchema.extend({
+  sleepTarget: z.string().default(''),
+  sleepProtocol: z.array(sleepLeverSchema).default([]),
   practices: z
     .array(
       z.object({
@@ -82,15 +105,90 @@ function asLifestyleBase(value: unknown) {
   return value;
 }
 
+function asFoodPortions(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (typeof item === 'string') {
+      const name = item.trim();
+      return name ? [{ name, approximateAmount: '' }] : [];
+    }
+
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const row = item as { name?: unknown; approximateAmount?: unknown };
+    const name = typeof row.name === 'string' ? row.name : '';
+    const approximateAmount =
+      typeof row.approximateAmount === 'string' ? row.approximateAmount : '';
+
+    if (!name && !approximateAmount) {
+      return [];
+    }
+
+    return [{ name, approximateAmount }];
+  });
+}
+
+function asNutritionBlock(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return { targets: '', sources: [] };
+  }
+
+  const block = value as { targets?: unknown; sources?: unknown };
+  const sources = Array.isArray(block.sources)
+    ? block.sources.map((source) => {
+        if (!source || typeof source !== 'object') {
+          return { nutrient: '', amount: null, foods: [], localProducts: [] };
+        }
+
+        const row = source as {
+          nutrient?: unknown;
+          amount?: unknown;
+          foods?: unknown;
+          localProducts?: unknown;
+        };
+
+        return {
+          nutrient: typeof row.nutrient === 'string' ? row.nutrient : '',
+          amount: typeof row.amount === 'string' ? row.amount : null,
+          foods: asFoodPortions(row.foods),
+          localProducts: asFoodPortions(row.localProducts),
+        };
+      })
+    : [];
+
+  return {
+    targets: typeof block.targets === 'string' ? block.targets : '',
+    sources,
+  };
+}
+
 function asNutritionLifestyle(value: unknown) {
   const base = asLifestyleBase(value);
-  const parsed = nutritionLifestyleSchema.safeParse(base);
+  const nutrition = {
+    ...base,
+    macros: asNutritionBlock(
+      base && typeof base === 'object' && 'macros' in base
+        ? (base as { macros?: unknown }).macros
+        : undefined,
+    ),
+    micros: asNutritionBlock(
+      base && typeof base === 'object' && 'micros' in base
+        ? (base as { micros?: unknown }).micros
+        : undefined,
+    ),
+  };
+  const parsed = nutritionLifestyleSchema.safeParse(nutrition);
   if (parsed.success) {
     return parsed.data;
   }
 
   return nutritionLifestyleSchema.parse({
-    ...base,
+    ...nutrition,
     dietType: null,
     macros: { targets: '', sources: [] },
     micros: { targets: '', sources: [] },
@@ -110,6 +208,7 @@ function asExerciseLifestyle(value: unknown) {
     duration: '',
     intensity: '',
     intensityExplanation: '',
+    reasons: [],
   });
 }
 
@@ -122,6 +221,8 @@ function asMentalSleepLifestyle(value: unknown) {
 
   return mentalSleepLifestyleSchema.parse({
     ...base,
+    sleepTarget: '',
+    sleepProtocol: [],
     practices: [],
   });
 }
@@ -130,7 +231,6 @@ export const shareableSectionValues = [
   'context',
   'executiveSummary',
   'conclusions',
-  'recommendations',
   'lifestyle',
   'supplements',
 ] as const;
@@ -184,6 +284,28 @@ export const recommendationOutputSchema = z.object({
 });
 
 export type RecommendationOutput = z.infer<typeof recommendationOutputSchema>;
+
+/** Same output shape, with minimum structure the model must fill in. */
+export const recommendationGenerationSchema = recommendationOutputSchema.extend({
+  lifestyle: z.object({
+    nutrition: nutritionLifestyleSchema,
+    exercise: exerciseLifestyleSchema.extend({
+      reasons: z.array(exerciseReasonSchema).min(3).max(5),
+    }),
+    mentalAndSleep: mentalSleepLifestyleSchema.extend({
+      sleepProtocol: z
+        .array(
+          z.object({
+            lever: z.string().min(1),
+            action: z.string().min(1),
+            howToKnow: z.string().min(1),
+          }),
+        )
+        .min(4)
+        .max(6),
+    }),
+  }),
+});
 
 /** Accepts current schema or legacy string conclusions/recommendations/lifestyle. */
 export function asRecommendationOutput(value: unknown): RecommendationOutput | null {

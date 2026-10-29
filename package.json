@@ -2,6 +2,9 @@
   "name": "health-emr",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "npm run ifm:prepare && drizzle-kit migrate && react-router build",
     "vercel-build": "tsx scripts/validate-ifm-bundle.ts && drizzle-kit migrate && react-router build",

@@ -1,6 +1,5 @@
 {
   "framework": null,
-  "buildCommand": "yarn vercel-build",
   "outputDirectory": "build/client",
   "rewrites": [
     {

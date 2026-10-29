@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Users } from 'lucide-react';
+import { Building2, FilePenLine, LayoutDashboard, Users } from 'lucide-react';
 import { Outlet, redirect, useLoaderData } from 'react-router';
 
 import { APP_INITIAL, APP_NAME } from '~/brand';
@@ -12,6 +12,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { to: '/admin', label: 'Panel', icon: LayoutDashboard, end: true },
   { to: '/admin/organizations', label: 'Organizaciones', icon: Building2 },
   { to: '/admin/users', label: 'Usuarios', icon: Users },
+  { to: '/admin/recommendation-prompts', label: 'Prompts', icon: FilePenLine },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {

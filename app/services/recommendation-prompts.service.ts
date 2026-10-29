@@ -1,5 +1,6 @@
 import { AuditAction } from '~/db/models/enums';
 import {
+  findActiveRecommendationPrompts,
   findRecommendationPromptById,
   findRecommendationPrompts,
   findRecommendationPromptBySlug,
@@ -105,6 +106,15 @@ export function validateRecommendationPromptFormData(formData: FormData) {
   }
 
   return result.data;
+}
+
+/**
+ * Prompt used for provider-triggered generations: the active prompt configured
+ * by admins, falling back to the default prompt (created if missing).
+ */
+export async function resolveActiveRecommendationPrompt() {
+  const [active] = await findActiveRecommendationPrompts();
+  return active ?? (await ensureDefaultRecommendationPrompt());
 }
 
 export async function ensureDefaultRecommendationPrompt(createdByUserId?: string | null) {

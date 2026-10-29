@@ -41,6 +41,7 @@ import {
   selectIfmFoodPlan,
 } from './ifm-food-plan.service';
 import { generateRecommendationOutput } from './recommendation-generation.service';
+import { resolveActiveRecommendationPrompt } from './recommendation-prompts.service';
 
 export class ClinicalRecommendationValidationError extends Error {
   fieldErrors: Record<string, string>;
@@ -186,19 +187,21 @@ export async function generateClinicalRecommendation(
       .join('\n') || null;
   const medicationsText = input.medicationsText ?? medicationsAndSupplementsText;
 
-  const model = input.model ?? process.env.OPENAI_MODEL ?? 'gpt-4o';
+  const prompt = await resolveActiveRecommendationPrompt();
+  const model = prompt.model;
+  const systemPrompt = prompt.systemPrompt;
   const userPromptBase = buildClinicalUserPrompt({
     patientSnapshot,
     labSnapshot,
     medicalHistorySnapshot,
     medicationsText,
     localFoods,
-    instructions: input.instructions,
+    instructions: prompt.userPromptTemplate,
   });
 
   const promptSnapshot = [
     '### SYSTEM',
-    input.systemPrompt,
+    systemPrompt,
     '',
     '### USER (clinical data)',
     userPromptBase,
@@ -208,7 +211,7 @@ export async function generateClinicalRecommendation(
     patientId,
     organizationId: patient.organizationId,
     labReportId: labReport.id,
-    promptId: null,
+    promptId: prompt.id,
     promptSnapshot,
     model,
     status: ClinicalRecommendationStatus.GENERATING,
@@ -264,7 +267,7 @@ export async function generateClinicalRecommendation(
     });
 
     const generated = await generateRecommendationOutput({
-      systemPrompt: input.systemPrompt,
+      systemPrompt,
       userPrompt,
       model,
     });
@@ -567,7 +570,7 @@ function calculateAgeYears(birthDate: string) {
   return Math.max(age, 0);
 }
 
-function buildClinicalUserPrompt({
+export function buildClinicalUserPrompt({
   patientSnapshot,
   labSnapshot,
   medicalHistorySnapshot,

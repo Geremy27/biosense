@@ -121,7 +121,6 @@ export default function RecommendationDetail({ loaderData, actionData }: Route.C
             ← Recomendaciones
           </Link>
           <h2 className="mt-2 text-2xl font-bold text-cyan-950">Recomendación clínica</h2>
-          <p className="mt-1 text-sm text-slate-500">Modelo: {recommendation.model}</p>
         </div>
         <StatusBadge
           label={formatRecommendationStatus(recommendation.status)}

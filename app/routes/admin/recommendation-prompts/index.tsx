@@ -1,4 +1,4 @@
-import { FilePenLine } from 'lucide-react';
+import { FilePenLine, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { pageTitle } from '~/brand';
@@ -29,6 +29,12 @@ export default function RecommendationPromptsIndex({ loaderData }: Route.Compone
       <PageHeader
         eyebrow="Administración"
         title="Prompts de recomendación"
+        actions={
+          <Link to="/admin/recommendation-prompts/playground" className="btn-primary gap-2">
+            <FlaskConical className="size-4" aria-hidden />
+            Playground
+          </Link>
+        }
       />
 
       {loaderData.prompts.length === 0 ? (

@@ -13,10 +13,6 @@ import {
 } from '~/services/clinical-recommendations.service';
 import { listMedicalHistories } from '~/services/patient-medical-histories.service';
 import { listLabReports } from '~/services/lab-reports.service';
-import {
-  DEFAULT_RECOMMENDATION_INSTRUCTIONS,
-  DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-} from '~/services/recommendation-prompt-defaults';
 import { formatMedicalHistoryDate } from '~/utils/medical-history-display';
 import { formatLabDate } from '~/utils/lab-display';
 import { buildActorContext } from '~/utils/session.server';
@@ -38,9 +34,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         row.status === MedicalHistoryStatus.DRAFT ||
         row.status === MedicalHistoryStatus.CONFIRMED,
     ),
-    defaultSystemPrompt: DEFAULT_RECOMMENDATION_SYSTEM_PROMPT,
-    defaultInstructions: DEFAULT_RECOMMENDATION_INSTRUCTIONS,
-    defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o',
   };
 }
 
@@ -81,8 +74,7 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
         </Link>
         <h2 className="mt-2 text-2xl font-bold text-cyan-950">Generar recomendación</h2>
         <p className="mt-2 text-sm text-slate-500">
-          Los datos clínicos (paciente, antecedentes y laboratorio) se envían automáticamente.
-          Aquí solo editas las instrucciones para el modelo.
+          Los datos clínicos (paciente, antecedentes y laboratorio) se envían automáticamente al modelo.
         </p>
       </div>
 
@@ -148,44 +140,6 @@ export default function NewRecommendation({ loaderData }: Route.ComponentProps) 
                 placeholder="Si lo dejas vacío, se usa la medicación de los antecedentes seleccionados."
               />
               <FieldError message={actionData?.errors?.medicationsText} />
-            </FormField>
-
-            <FormField id="model" label="Modelo">
-              <input
-                id="model"
-                name="model"
-                className="input"
-                defaultValue={loaderData.defaultModel}
-              />
-              <FieldError message={actionData?.errors?.model} />
-            </FormField>
-
-            <FormField id="systemPrompt" label="System prompt">
-              <textarea
-                id="systemPrompt"
-                name="systemPrompt"
-                rows={8}
-                className="input font-mono text-sm"
-                required
-                defaultValue={loaderData.defaultSystemPrompt}
-              />
-              <FieldError message={actionData?.errors?.systemPrompt} />
-            </FormField>
-
-            <FormField id="instructions" label="Instrucciones">
-              <textarea
-                id="instructions"
-                name="instructions"
-                rows={18}
-                className="input font-mono text-sm"
-                required
-                defaultValue={loaderData.defaultInstructions}
-              />
-              <p className="mt-2 text-xs text-slate-500">
-                Solo instrucciones clínicas. Demografía, antecedentes, medicación y analitos se
-                agregan automáticamente en código.
-              </p>
-              <FieldError message={actionData?.errors?.instructions} />
             </FormField>
 
             <div className="flex items-start gap-3 rounded-lg border border-slate-200 p-4">

@@ -361,13 +361,6 @@ export const generateRecommendationInputSchema = z.object({
     .transform((value) => (value === '' ? null : value))
     .nullable()
     .pipe(z.string().uuid({ message: 'Selecciona antecedentes válidos.' }).nullable()),
-  systemPrompt: z.string().trim().min(1, 'El system prompt es obligatorio.'),
-  instructions: z.string().trim().min(1, 'Las instrucciones son obligatorias.'),
-  model: z
-    .string()
-    .trim()
-    .transform((value) => (value === '' ? null : value))
-    .nullable(),
   medicationsText: z
     .string()
     .trim()
@@ -381,9 +374,6 @@ export function parseGenerateRecommendationFormData(formData: FormData) {
   return generateRecommendationInputSchema.safeParse({
     labReportId: String(formData.get('labReportId') ?? ''),
     medicalHistoryId: String(formData.get('medicalHistoryId') ?? ''),
-    systemPrompt: String(formData.get('systemPrompt') ?? ''),
-    instructions: String(formData.get('instructions') ?? ''),
-    model: String(formData.get('model') ?? ''),
     medicationsText: String(formData.get('medicationsText') ?? ''),
   });
 }

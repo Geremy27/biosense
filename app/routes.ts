@@ -15,6 +15,7 @@ export default [
       route('users/new', 'routes/admin/users/new.tsx'),
       route('users/:id', 'routes/admin/users/$id.tsx'),
       route('recommendation-prompts', 'routes/admin/recommendation-prompts/index.tsx'),
+      route('recommendation-prompts/playground', 'routes/admin/recommendation-prompts/playground.tsx'),
       route('recommendation-prompts/:id', 'routes/admin/recommendation-prompts/$id.tsx'),
     ]),
   ]),

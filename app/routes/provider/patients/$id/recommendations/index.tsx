@@ -53,7 +53,6 @@ export default function PatientRecommendations({ loaderData }: Route.ComponentPr
               <tr>
                 <th className="data-table-th">Fecha</th>
                 <th className="data-table-th">Estado</th>
-                <th className="data-table-th">Modelo</th>
                 <th className="data-table-th text-right">Acción</th>
               </tr>
             </thead>
@@ -76,7 +75,6 @@ export default function PatientRecommendations({ loaderData }: Route.ComponentPr
                       }
                     />
                   </td>
-                  <td className="data-table-td">{recommendation.model}</td>
                   <td className="data-table-td text-right">
                     <Link
                       to={`/provider/patients/${patient.id}/recommendations/${recommendation.id}`}

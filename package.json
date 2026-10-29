@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run ifm:prepare && drizzle-kit migrate && react-router build",
+    "vercel-build": "tsx scripts/validate-ifm-bundle.ts && drizzle-kit migrate && react-router build",
     "dev": "react-router dev",
     "predev": "npm run ifm:prepare",
     "start": "react-router-serve ./build/server/index.js",
